@@ -27,9 +27,11 @@ jobs:
     name: Test, type-check and build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      # node-version stays at 20: this is the Node the project is built
+      # and tested with, independent of the action's own runtime.
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
