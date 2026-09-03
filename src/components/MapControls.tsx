@@ -3,19 +3,24 @@ import { MAX_SCALE, MIN_SCALE } from '../hooks/useMapTransform'
 
 interface Props {
   scale: number
+  /**
+   * Lets a live gesture update the percentage without a React render.
+   * `scale` still seeds it and takes over again once the finger lifts.
+   */
+  readoutRef?: React.MutableRefObject<HTMLDivElement | null>
   onZoomIn: () => void
   onZoomOut: () => void
   onFit: () => void
   onReset: () => void
 }
 
-export function MapControls({ scale, onZoomIn, onZoomOut, onFit, onReset }: Props) {
+export function MapControls({ scale, readoutRef, onZoomIn, onZoomOut, onFit, onReset }: Props) {
   return (
     <div className="map-controls" role="group" aria-label="Map controls">
       <button type="button" onClick={onZoomIn} disabled={scale >= MAX_SCALE - 0.001} aria-label="Zoom in">
         <ZoomIn size={22} aria-hidden="true" />
       </button>
-      <div className="zoom-readout" aria-hidden="true">
+      <div className="zoom-readout" aria-hidden="true" ref={readoutRef}>
         {Math.round(scale * 100)}%
       </div>
       <button type="button" onClick={onZoomOut} disabled={scale <= MIN_SCALE + 0.001} aria-label="Zoom out">

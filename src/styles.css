@@ -660,15 +660,39 @@ button {
   background: radial-gradient(circle at 30% 15%, #ffffff 0%, var(--bg) 68%);
 }
 
-.stage__canvas.is-panning {
-  cursor: grabbing;
-}
-
 .stage__canvas svg {
   width: 100%;
   height: 100%;
   display: block;
   user-select: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* Live gesture                                                      */
+/*                                                                   */
+/* The class is toggled straight on the <svg> while a finger is down, */
+/* so quality can drop for the gesture without rebuilding the tree to */
+/* do it. Everything here is restored the moment the finger lifts.    */
+/* ---------------------------------------------------------------- */
+
+.stage__canvas svg.is-gesturing {
+  cursor: grabbing;
+}
+
+/* Filters are the expensive part: each one is an offscreen buffer the
+   compositor has to redraw every frame. None of them survive a drag. */
+.stage__canvas svg.is-gesturing .room,
+.stage__canvas svg.is-gesturing .map__outline {
+  filter: none !important;
+}
+
+/* A touch leaves rooms in :hover as it passes over them, so the hover
+   brightness would add a filter buffer per room, mid-gesture, on the
+   very frames that can least afford one. Transitions would fight the
+   per-frame writes too. */
+.stage__canvas svg.is-gesturing .room__shape {
+  filter: none !important;
+  transition: none !important;
 }
 
 .floor-badge {
