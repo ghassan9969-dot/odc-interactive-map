@@ -52,6 +52,8 @@ export const firstCirculation: CirculationArea[] = [
   { id: 'f-circ-v4', floor: F, polys: [rect(f1, 1102, TOP, 1130, BOT)] },
   { id: 'f-circ-v5', floor: F, polys: [rect(f1, 1514, TOP, 1527, BOT)] },
   { id: 'f-circ-v6', floor: F, polys: [rect(f1, 1673, TOP, 1699, BOT)] },
+  // Reaches 1586 so it meets f-circ-e2 rather than leaving a two-unit
+  // gap the east-core routes had to jump. Found by the corridor tests.
   { id: 'f-circ-e1', floor: F, polys: [rect(f1, 1527, 1124, 1586, 1162)] },
   { id: 'f-circ-e2', floor: F, polys: [rect(f1, 1586, 1094, 1604, 1272)] },
   { id: 'f-circ-sim', floor: F, polys: [rect(f1, 1699, 1244, 1953, 1284)] },

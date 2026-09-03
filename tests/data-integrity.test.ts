@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FLOORS, FLOOR_BY_ID } from '../src/data/floors'
-import { GRAPHS, LOCATIONS, SECONDARY, CIRCULATION } from '../src/data/locations'
+import { GRAPHS, LOCATIONS, SECONDARY, CIRCULATION, secondOpenShell } from '../src/data/locations'
 import { buildRoute } from '../src/data/routes'
 import type { FloorId } from '../src/data/types'
 
@@ -171,5 +171,31 @@ describe('single-floor routes', () => {
       expect(Math.hypot(route.start[0] - origin[0], route.start[1] - origin[1])).toBeLessThan(1)
       expect(Math.hypot(route.end[0] - l.door[0], route.end[1] - l.door[1])).toBeLessThan(1)
     }
+  })
+})
+
+describe('the unfitted Second Floor plate', () => {
+  it('is not offered as a destination', () => {
+    // Lifts L3 & L4 and Stair 03 sit in the open shell. They stay drawn on
+    // the map as support spaces, but a visitor must never be sent there.
+    const inShell = LOCATIONS.filter((l) => l.floor === 'second').filter((l) => {
+      const box = l.shape.polys.flat()
+      return box.every(([x]) => x > secondOpenShell.poly[0][0])
+    })
+    expect(inShell.map((l) => `${l.id} (${l.name})`)).toEqual([])
+  })
+
+  it('still draws the east lift core as a support space', () => {
+    const drawn = SECONDARY.filter((s) => s.floor === 'second').map((s) => s.name)
+    expect(drawn).toContain('Lifts L3 & L4')
+    expect(drawn).toContain('Stair 03')
+  })
+
+  it('keeps no corridor node stranded inside the shell', () => {
+    const shellX = secondOpenShell.poly[0][0]
+    const inside = Object.entries(GRAPHS.second.nodes)
+      .filter(([, p]) => p[0] > shellX)
+      .map(([id]) => id)
+    expect(inside).toEqual([])
   })
 })

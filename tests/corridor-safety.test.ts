@@ -28,20 +28,15 @@ const pointInPolygon = (p: Pt, poly: Pt[]): boolean => {
 }
 
 /**
- * Walkable floor is the circulation, plus one declared exception.
+ * Walkable floor is the circulation, and nothing else.
  *
  * The eastern half of the Second Floor is unfitted shell on sheet
- * -16-C: an open plate with nothing but a column grid and the east lift
- * core. `secondOpenShell` models it as exactly that, and the two
- * east-core destinations (Lifts L3 & L4, Stair 03) are reached by
- * crossing it. That is what the drawing shows, so the area counts as
- * walkable here rather than the test being loosened for those two
- * destinations. It is named, not a blanket allowance.
+ * -16-C — an open plate with a column grid — and has not been confirmed
+ * as publicly walkable. It is deliberately absent from this list, and a
+ * separate test below asserts that no route enters it.
  */
-const walkableAreas = (floor: FloorId): Pt[][] => {
-  const areas = circulationOnFloor(floor).flatMap((area) => area.polys)
-  return floor === 'second' ? [...areas, secondOpenShell.poly] : areas
-}
+const walkableAreas = (floor: FloorId): Pt[][] =>
+  circulationOnFloor(floor).flatMap((area) => area.polys)
 
 interface Escape {
   destination: string
@@ -102,6 +97,28 @@ describe('routes stay inside the corridors', () => {
     // destination and the exact point that leaves the corridor.
     const report = [...new Set(escapes.map((e) => `${e.destination} on ${e.floor}: segment ${e.segment} at ${e.at.join(',')}`))]
     expect(report).toEqual([])
+  })
+
+  it('never sends a visitor across the unfitted Second Floor plate', () => {
+    const trespass: string[] = []
+    for (const { location, leg } of legs) {
+      if (leg.floor !== 'second') continue
+      for (const point of leg.route.points) {
+        if (pointInPolygon(point, secondOpenShell.poly)) {
+          trespass.push(`${location.id} (${location.name}) at ${point.map(Math.round).join(',')}`)
+        }
+      }
+    }
+    expect(trespass).toEqual([])
+  })
+
+  it('keeps every visitor destination reachable without the open plate', () => {
+    // Nothing may be listed or searchable that cannot be walked to using
+    // corridors alone.
+    for (const location of LOCATIONS) {
+      const journey = buildJourney(location)
+      expect(journey, `${location.id} has no journey`).not.toBeNull()
+    }
   })
 
   it('lets only the final segment reach the destination door', () => {
