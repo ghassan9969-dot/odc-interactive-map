@@ -1,29 +1,22 @@
-import { Info, Navigation, X } from 'lucide-react'
+import { Info, Navigation } from 'lucide-react'
 import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
 import type { Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
 
 interface Props {
   location: Location
+  /** When a route is on screen the route panel owns the "Hide route" button. */
   routeShown: boolean
   floorHint: string | null
-  onClose: () => void
   onRoute: () => void
-  onHideRoute: () => void
 }
 
-export function LocationCard({
-  location,
-  routeShown,
-  floorHint,
-  onClose,
-  onRoute,
-  onHideRoute,
-}: Props) {
+export function LocationCard({ location, routeShown, floorHint, onRoute }: Props) {
   const cat = CATEGORIES[location.category]
   const floor = FLOOR_BY_ID[location.floor]
+
   return (
-    <aside className="card" aria-label={`${location.name} information`}>
+    <div className="card">
       <div className="card__head">
         <span className="card__icon" style={{ background: cat.fill, color: cat.text }} aria-hidden="true">
           <UiMapIcon type={location.icon} size={22} />
@@ -34,9 +27,6 @@ export function LocationCard({
             <span className="card__floor">{floor.name}</span> · {cat.label}
           </p>
         </div>
-        <button type="button" className="card__close" onClick={onClose} aria-label="Close information card">
-          <X size={18} aria-hidden="true" />
-        </button>
       </div>
 
       <p className="card__body">{location.description}</p>
@@ -48,18 +38,14 @@ export function LocationCard({
         </p>
       )}
 
-      <div className="card__actions">
-        {routeShown ? (
-          <button type="button" className="btn btn--ghost" onClick={onHideRoute}>
-            Hide route
-          </button>
-        ) : (
+      {!routeShown && (
+        <div className="card__actions">
           <button type="button" className="btn btn--primary" onClick={onRoute}>
             <Navigation size={17} aria-hidden="true" />
             How to get there
           </button>
-        )}
-      </div>
-    </aside>
+        </div>
+      )}
+    </div>
   )
 }

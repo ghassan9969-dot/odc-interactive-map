@@ -90,7 +90,7 @@ export function FloorMap({
     const box = boundsOf(target.shape.polys)
     const cx = box.x + box.w / 2
     const cy = box.y + box.h / 2
-    const k = Math.min(1.9, Math.max(1.15, 900 / Math.max(box.w, box.h, 120)))
+    const k = Math.min(1.8, Math.max(1.15, 900 / Math.max(box.w, box.h, 120)))
     centerOn([cx, cy] as Pt, k)
   }, [focusTarget, locations, centerOn])
 
@@ -99,9 +99,11 @@ export function FloorMap({
   useEffect(() => {
     if (!route) return
     const b = boundsOf([route.points])
-    const w = Math.max(b.w + 160, def.width * 0.42)
-    const h = Math.max(b.h + 160, def.height * 0.42)
-    fitTo({ x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w, h }, 1.06)
+    // Never tighter than a good slice of the floor, and never past 1.8x,
+    // so the walk always sits in recognisable surroundings.
+    const w = Math.max(b.w + 200, def.width * 0.55)
+    const h = Math.max(b.h + 200, def.height * 0.55)
+    fitTo({ x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w, h }, 1.08, 1.8)
   }, [route, fitTo, def.width, def.height])
 
   const { k, x, y } = map.transform

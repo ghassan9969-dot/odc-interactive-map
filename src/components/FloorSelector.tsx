@@ -5,9 +5,11 @@ import type { FloorId } from '../data/types'
 interface Props {
   value: FloorId
   onChange: (floor: FloorId) => void
+  /** `rail` stacks the tabs vertically for the collapsed side panel. */
+  variant?: 'full' | 'rail'
 }
 
-export function FloorSelector({ value, onChange }: Props) {
+export function FloorSelector({ value, onChange, variant = 'full' }: Props) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
 
   const move = (index: number, delta: number) => {
@@ -16,8 +18,15 @@ export function FloorSelector({ value, onChange }: Props) {
     refs.current[next]?.focus()
   }
 
+  const rail = variant === 'rail'
+
   return (
-    <div className="floors" role="tablist" aria-label="Choose a floor">
+    <div
+      className={rail ? 'floors floors--rail' : 'floors'}
+      role="tablist"
+      aria-orientation={rail ? 'vertical' : 'horizontal'}
+      aria-label="Choose a floor"
+    >
       {FLOORS.map((floor, i) => (
         <button
           key={floor.id}
@@ -29,6 +38,8 @@ export function FloorSelector({ value, onChange }: Props) {
           id={`floor-tab-${floor.id}`}
           aria-selected={value === floor.id}
           aria-controls="floor-map-panel"
+          aria-label={rail ? floor.name : undefined}
+          title={rail ? floor.name : undefined}
           tabIndex={value === floor.id ? 0 : -1}
           className="floor-tab"
           onClick={() => onChange(floor.id)}
@@ -51,7 +62,7 @@ export function FloorSelector({ value, onChange }: Props) {
           <span className="floor-tab__level" aria-hidden="true">
             {floor.level}
           </span>
-          <span className="floor-tab__name">{floor.shortName}</span>
+          {!rail && <span className="floor-tab__name">{floor.shortName}</span>}
         </button>
       ))}
     </div>

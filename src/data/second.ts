@@ -356,41 +356,6 @@ export const secondLocations: Location[] = [
     keywords: ['stairs', 'staircase'],
     primary: false,
   },
-  {
-    id: 's-lift-34',
-    name: 'Lifts L3 & L4',
-    shortName: 'Lifts L3 / L4',
-    floor: F,
-    category: 'circulation',
-    description: 'Passenger lifts in the eastern part of the floor.',
-    icon: 'lift',
-    shape: {
-      polys: [rect(f2, 1622, 1194, 1658, 1258)],
-      dividers: [[f2(1622, 1226), f2(1658, 1226)]],
-    },
-    label: f2(1640, 1226),
-    labelSize: 10,
-    door: f2(1620, 1226),
-    entryNode: 'east_core',
-    keywords: ['elevator', 'lift', 'l3', 'l4'],
-    primary: false,
-  },
-  {
-    id: 's-stair-03',
-    name: 'Stair 03',
-    shortName: 'Stair 03',
-    floor: F,
-    category: 'circulation',
-    description: 'Staircase in the eastern part of the floor.',
-    icon: 'stairs',
-    shape: { polys: [rect(f2, 1585, 1300, 1645, 1390)] },
-    label: f2(1615, 1345),
-    labelSize: 15,
-    door: f2(1615, 1298),
-    entryNode: 'east_core',
-    keywords: ['stairs', 'staircase'],
-    primary: false,
-  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -490,6 +455,31 @@ export const secondSecondary: SecondarySpace[] = [
     kind: 'service',
     shape: { polys: [rect(f2, 560, 1428, 612, 1478)] },
   },
+  // The east lift core sits in the unfitted eastern plate. It is drawn
+  // because the drawing shows it, but it is not a visitor destination:
+  // reaching it would mean walking across open shell, so it is neither
+  // searchable, listed, nor routable.
+  {
+    id: 's-s-lift-34',
+    name: 'Lifts L3 & L4',
+    floor: F,
+    kind: 'core',
+    shape: {
+      polys: [rect(f2, 1622, 1194, 1658, 1258)],
+      dividers: [[f2(1622, 1226), f2(1658, 1226)]],
+    },
+    label: f2(1640, 1226),
+    labelSize: 11,
+  },
+  {
+    id: 's-s-stair-03',
+    name: 'Stair 03',
+    floor: F,
+    kind: 'core',
+    shape: { polys: [rect(f2, 1585, 1300, 1645, 1390)] },
+    label: f2(1615, 1345),
+    labelSize: 11,
+  },
   {
     id: 's-s-east-tech',
     name: '',
@@ -542,9 +532,6 @@ export const secondNodes: Record<string, Pt> = {
   v2_s: f2(596, 1440),
   sw_450: f2(430, 1420),
   sw_303: f2(303, 1370),
-  open_w: f2(1180, 1373),
-  open_e: f2(1600, 1373),
-  east_core: f2(1600, 1270),
 }
 
 const chain = (ids: string[]): [string, string][] =>
@@ -568,7 +555,4 @@ export const secondEdges: [string, string][] = [
   ['dcn_680', 'dcn_832'],
   ['v2_m', 'dc_596'],
   ['dc_596', 'v2_s'],
-  ['dc_1084', 'open_w'],
-  ['open_w', 'open_e'],
-  ['open_e', 'east_core'],
 ]

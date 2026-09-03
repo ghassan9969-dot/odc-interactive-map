@@ -4,8 +4,17 @@ import { CATEGORIES } from '../data/floors'
 
 const ORDER = ['clinical', 'learning', 'laboratory', 'food', 'administration', 'reception', 'secondary'] as const
 
+/**
+ * On a tablet — or any short window — the legend starts collapsed so it
+ * does not eat into the plan. Roomy desktops keep it open.
+ */
+const startCollapsed = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(max-height: 860px), (pointer: coarse)').matches
+
 export function MapLegend() {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(() => !startCollapsed())
 
   return (
     <div className="legend">
@@ -19,8 +28,7 @@ export function MapLegend() {
         {open ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronUp size={16} aria-hidden="true" />}
         Map legend
       </button>
-      {open && (
-        <ul className="legend__items" id="map-legend-items">
+      <ul className="legend__items" id="map-legend-items" hidden={!open}>
           {ORDER.map((id) => {
             const cat = CATEGORIES[id]
             return (
@@ -38,8 +46,7 @@ export function MapLegend() {
             <span className="legend__swatch legend__swatch--route" aria-hidden="true" />
             Navigation route
           </li>
-        </ul>
-      )}
+      </ul>
     </div>
   )
 }
