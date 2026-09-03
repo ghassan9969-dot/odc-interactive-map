@@ -34,6 +34,7 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
   const localRef = useRef<HTMLInputElement | null>(null)
   const inputRef = externalRef ?? localRef
   const listId = useId()
+  const listOpen = open && query.trim().length > 0
 
   const results = useMemo(() => {
     const q = query.trim()
@@ -76,7 +77,7 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
           autoComplete="off"
           role="combobox"
           aria-expanded={open && results.length > 0}
-          aria-controls={listId}
+          aria-controls={listOpen ? listId : undefined}
           aria-autocomplete="list"
           aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
           placeholder="Search for a destination..."
@@ -109,7 +110,7 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
         )}
       </div>
 
-      {open && query.trim().length > 0 && (
+      {listOpen && (
         <ul className="search__results" id={listId} role="listbox" aria-label="Search results">
           {results.length === 0 && (
             <li className="search__empty">

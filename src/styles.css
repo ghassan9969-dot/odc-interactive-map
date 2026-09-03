@@ -786,6 +786,10 @@ button {
   flex: 0 0 auto;
 }
 
+.legend__items[hidden] {
+  display: none;
+}
+
 .legend__items {
   display: flex;
   flex-wrap: wrap;
@@ -972,28 +976,50 @@ button {
 }
 
 .route-bar__steps {
-  margin: 8px 0 0;
-  padding-left: 19px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
   font-size: 13.5px;
   color: var(--ink);
 }
 
-.route-bar__steps li {
-  margin-bottom: 3px;
+.route-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px dashed #f0ddc8;
 }
 
-.route-bar__steps li::marker {
-  color: var(--route);
-  font-weight: 700;
+.route-step:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.route-step__icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--route-dark);
+}
+
+.route-step--start .route-step__icon,
+.route-step--arrive .route-step__icon {
+  color: var(--teal);
+}
+
+.route-step--arrive {
+  font-weight: 600;
 }
 
 .route-bar__actions {
-  margin-top: 10px;
+  margin-top: 11px;
+  display: grid;
+  gap: 7px;
 }
 
 .route-bar__actions .btn {
   width: 100%;
-  min-height: 42px;
+  min-height: 46px;
   font-size: 14px;
 }
 

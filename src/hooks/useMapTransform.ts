@@ -87,8 +87,9 @@ export function useMapTransform(width: number, height: number) {
 
   /** Fit a bounding box, with padding, into the view. */
   const fitTo = useCallback(
-    (box: { x: number; y: number; w: number; h: number }, pad = 1.5) => {
-      const k = clamp(Math.min(width / (box.w * pad), height / (box.h * pad)), MIN_SCALE, MAX_SCALE)
+    (box: { x: number; y: number; w: number; h: number }, pad = 1.5, maxScale = MAX_SCALE) => {
+      const ceiling = Math.min(MAX_SCALE, maxScale)
+      const k = clamp(Math.min(width / (box.w * pad), height / (box.h * pad)), MIN_SCALE, ceiling)
       const cx = box.x + box.w / 2
       const cy = box.y + box.h / 2
       setTransform(constrain({ k, x: width / 2 - cx * k, y: height / 2 - cy * k }))

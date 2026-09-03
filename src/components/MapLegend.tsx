@@ -28,8 +28,7 @@ export function MapLegend() {
         {open ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronUp size={16} aria-hidden="true" />}
         Map legend
       </button>
-      {open && (
-        <ul className="legend__items" id="map-legend-items">
+      <ul className="legend__items" id="map-legend-items" hidden={!open}>
           {ORDER.map((id) => {
             const cat = CATEGORIES[id]
             return (
@@ -47,8 +46,7 @@ export function MapLegend() {
             <span className="legend__swatch legend__swatch--route" aria-hidden="true" />
             Navigation route
           </li>
-        </ul>
-      )}
+      </ul>
     </div>
   )
 }

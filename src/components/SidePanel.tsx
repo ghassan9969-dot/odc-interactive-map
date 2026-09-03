@@ -1,18 +1,18 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, ListTree, Search } from 'lucide-react'
 import { DestinationSearch } from './DestinationSearch'
 import { FloorSelector } from './FloorSelector'
 import { DestinationList } from './DestinationList'
 import { LocationCard } from './LocationCard'
 import { RouteInstructions } from './RouteInstructions'
-import type { Route } from '../data/routes'
+import type { Journey } from '../data/routes'
 import type { FloorId, Location } from '../data/types'
 
 interface Props {
   floor: FloorId
   selected: Location | null
-  route: Route | null
-  routeShown: boolean
+  journey: Journey | null
+  legIndex: number
   floorHint: string | null
   collapsed: boolean
   onToggleCollapsed: (collapsed: boolean) => void
@@ -20,6 +20,7 @@ interface Props {
   onSelect: (location: Location) => void
   onClearSelection: () => void
   onRoute: () => void
+  onGoToLeg: (index: number) => void
   onHideRoute: () => void
 }
 
@@ -35,8 +36,8 @@ interface Props {
 export function SidePanel({
   floor,
   selected,
-  route,
-  routeShown,
+  journey,
+  legIndex,
   floorHint,
   collapsed,
   onToggleCollapsed,
@@ -44,13 +45,32 @@ export function SidePanel({
   onSelect,
   onClearSelection,
   onRoute,
+  onGoToLeg,
   onHideRoute,
 }: Props) {
   const searchRef = useRef<HTMLInputElement | null>(null)
+  const routeRef = useRef<HTMLDivElement | null>(null)
+  const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false)
 
-  if (collapsed) {
-    return (
-      <div className="panel is-collapsed">
+  // The rail's search button reopens the panel; focus once the expanded
+  // markup has actually been committed, rather than guessing with a timer.
+  useEffect(() => {
+    if (collapsed || !focusSearchOnOpen) return
+    searchRef.current?.focus()
+    setFocusSearchOnOpen(false)
+  }, [collapsed, focusSearchOnOpen])
+
+  // Bring the current leg — and its Continue button — into view whenever
+  // navigation starts or moves to the next floor.
+  const legKey = journey ? `${journey.target.id}:${legIndex}` : null
+  useEffect(() => {
+    if (!legKey) return
+    routeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [legKey])
+
+  return (
+    <div className={collapsed ? 'panel is-collapsed' : 'panel'} id="destination-panel">
+      {collapsed ? (
         <div className="panel__rail">
           <button
             type="button"
@@ -69,8 +89,8 @@ export function SidePanel({
             type="button"
             className="panel__rail-btn"
             onClick={() => {
+              setFocusSearchOnOpen(true)
               onToggleCollapsed(false)
-              window.setTimeout(() => searchRef.current?.focus(), 60)
             }}
             aria-label="Search for a destination"
             title="Search"
@@ -82,47 +102,52 @@ export function SidePanel({
 
           <FloorSelector value={floor} onChange={onFloorChange} variant="rail" />
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="panel" id="destination-panel">
-      <div className="panel__head">
-        <DestinationSearch onPick={onSelect} inputRef={searchRef} />
-        <button
-          type="button"
-          className="panel__collapse"
-          onClick={() => onToggleCollapsed(true)}
-          aria-expanded
-          aria-controls="destination-panel"
-          aria-label="Hide destinations panel to widen the map"
-          title="Hide panel"
-        >
-          <ChevronLeft size={20} aria-hidden="true" />
-        </button>
-      </div>
-
-      <FloorSelector value={floor} onChange={onFloorChange} />
-
-      {selected ? (
-        <section className="panel__details" aria-label={`${selected.name} details`}>
-          <button type="button" className="panel__back" onClick={onClearSelection}>
-            <ChevronLeft size={17} aria-hidden="true" />
-            All destinations
-          </button>
-          <LocationCard
-            location={selected}
-            routeShown={routeShown}
-            floorHint={floorHint}
-            onRoute={onRoute}
-          />
-          {routeShown && route && (
-            <RouteInstructions route={route} target={selected} floor={floor} onHide={onHideRoute} />
-          )}
-        </section>
       ) : (
-        <DestinationList floor={floor} selectedId={null} onSelect={onSelect} />
+        <>
+          <div className="panel__head">
+            <DestinationSearch onPick={onSelect} inputRef={searchRef} />
+            <button
+              type="button"
+              className="panel__collapse"
+              onClick={() => onToggleCollapsed(true)}
+              aria-expanded
+              aria-controls="destination-panel"
+              aria-label="Hide destinations panel to widen the map"
+              title="Hide panel"
+            >
+              <ChevronLeft size={20} aria-hidden="true" />
+            </button>
+          </div>
+
+          <FloorSelector value={floor} onChange={onFloorChange} />
+
+          {selected ? (
+            <section className="panel__details" aria-label={`${selected.name} details`}>
+              <button type="button" className="panel__back" onClick={onClearSelection}>
+                <ChevronLeft size={17} aria-hidden="true" />
+                All destinations
+              </button>
+              <LocationCard
+                location={selected}
+                routeShown={journey !== null}
+                floorHint={floorHint}
+                onRoute={onRoute}
+              />
+              {journey && (
+                <div ref={routeRef}>
+                  <RouteInstructions
+                    journey={journey}
+                    legIndex={legIndex}
+                    onGoToLeg={onGoToLeg}
+                    onHide={onHideRoute}
+                  />
+                </div>
+              )}
+            </section>
+          ) : (
+            <DestinationList floor={floor} selectedId={null} onSelect={onSelect} />
+          )}
+        </>
       )}
     </div>
   )
