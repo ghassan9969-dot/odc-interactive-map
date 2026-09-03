@@ -26,15 +26,26 @@ function score(location: Location, query: string): number {
   return -1
 }
 
+/**
+ * ARIA 1.2 combobox with a listbox popup.
+ *
+ * The options are plain list items, not buttons: an element with
+ * role="option" must not contain interactive descendants. Focus stays on
+ * the input throughout and the active option is conveyed through
+ * aria-activedescendant, which is what lets one set of keys drive both
+ * the field and the list.
+ */
 export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
   const localRef = useRef<HTMLInputElement | null>(null)
+  const activeRef = useRef<HTMLLIElement | null>(null)
   const inputRef = externalRef ?? localRef
-  const listId = useId()
-  const listOpen = open && query.trim().length > 0
+  const baseId = useId()
+  const listboxId = `${baseId}-listbox`
+  const optionId = (index: number) => `${baseId}-option-${index}`
 
   const results = useMemo(() => {
     const q = query.trim()
@@ -46,6 +57,11 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
       .map((r) => r.l)
   }, [query])
 
+  // The popup is on screen whenever there is a query, including when it
+  // has nothing to show, so aria-expanded matches what a visitor sees.
+  const popupOpen = open && query.trim().length > 0
+  const activeOption = popupOpen ? results[active] : undefined
+
   useEffect(() => setActive(0), [query])
 
   useEffect(() => {
@@ -55,6 +71,11 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
     document.addEventListener('mousedown', onDocDown)
     return () => document.removeEventListener('mousedown', onDocDown)
   }, [])
+
+  // Keep the highlighted option in view while arrowing through a long list.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [active, popupOpen])
 
   const choose = (location: Location) => {
     onPick(location)
@@ -76,10 +97,10 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
           type="text"
           autoComplete="off"
           role="combobox"
-          aria-expanded={open && results.length > 0}
-          aria-controls={listOpen ? listId : undefined}
+          aria-expanded={popupOpen}
+          aria-controls={popupOpen ? listboxId : undefined}
           aria-autocomplete="list"
-          aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
+          aria-activedescendant={activeOption ? optionId(active) : undefined}
           placeholder="Search for a destination..."
           value={query}
           onChange={(e) => {
@@ -88,18 +109,22 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setOpen(false)
+              return
+            }
             if (!results.length) return
             if (e.key === 'ArrowDown') {
               e.preventDefault()
+              setOpen(true)
               setActive((a) => (a + 1) % results.length)
             } else if (e.key === 'ArrowUp') {
               e.preventDefault()
+              setOpen(true)
               setActive((a) => (a - 1 + results.length) % results.length)
             } else if (e.key === 'Enter') {
               e.preventDefault()
               choose(results[active])
-            } else if (e.key === 'Escape') {
-              setOpen(false)
             }
           }}
         />
@@ -110,22 +135,22 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
         )}
       </div>
 
-      {listOpen && (
-        <ul className="search__results" id={listId} role="listbox" aria-label="Search results">
-          {results.length === 0 && (
-            <li className="search__empty">
-              No destination matches “{query.trim()}”. Try “clinic”, “library” or “reception”.
-            </li>
-          )}
-          {results.map((loc, i) => {
-            const cat = CATEGORIES[loc.category]
-            return (
-              <li key={loc.id} role="option" aria-selected={i === active} id={`${listId}-${i}`}>
-                <button
-                  type="button"
-                  className="search__result"
+      {popupOpen && (
+        <div className="search__results">
+          <ul className="search__options" role="listbox" id={listboxId} aria-label="Search results">
+            {results.map((loc, i) => {
+              const cat = CATEGORIES[loc.category]
+              return (
+                <li
+                  key={loc.id}
+                  id={optionId(i)}
+                  role="option"
                   aria-selected={i === active}
+                  ref={i === active ? activeRef : undefined}
+                  className="search__result"
                   onMouseEnter={() => setActive(i)}
+                  // Keeps focus on the input so the click lands on the option.
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => choose(loc)}
                 >
                   <span
@@ -142,11 +167,16 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
                       {FLOOR_BY_ID[loc.floor].name} · {cat.label}
                     </span>
                   </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+                </li>
+              )
+            })}
+          </ul>
+          {results.length === 0 && (
+            <p className="search__empty" role="status">
+              No destination matches “{query.trim()}”. Try “clinic”, “library” or “reception”.
+            </p>
+          )}
+        </div>
       )}
     </div>
   )

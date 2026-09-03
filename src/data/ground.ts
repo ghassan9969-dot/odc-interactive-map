@@ -64,8 +64,10 @@ const UC_BOTTOM = 1432
 /* ------------------------------------------------------------------ */
 
 export const groundCirculation: CirculationArea[] = [
-  { id: 'g-circ-wing-n', floor: F, polys: [wRect(147, 74, 975, 118)] },
-  { id: 'g-circ-wing-s', floor: F, polys: [wRect(147, 247, 975, 291)] },
+  // The wing corridors run a little past the wing's west wall so they
+  // meet the postgraduate circulation without a sliver of dead ground.
+  { id: 'g-circ-wing-n', floor: F, polys: [wRect(135, 74, 975, 118)] },
+  { id: 'g-circ-wing-s', floor: F, polys: [wRect(135, 247, 975, 291)] },
   { id: 'g-circ-wing-cross', floor: F, polys: [wRect(874, 12, 896, 351)] },
   {
     id: 'g-circ-pg',

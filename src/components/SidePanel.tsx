@@ -32,6 +32,11 @@ interface Props {
  * plan itself is never covered. On a landscape iPad the panel can be
  * collapsed to a narrow rail that still exposes search and the floor
  * buttons, handing the map roughly 230px of extra width.
+ *
+ * The toggle sits in a bar that is a sibling of the region it controls,
+ * never an ancestor of it, so its aria-controls points at a real
+ * disclosure target. That target stays in the document while collapsed
+ * — empty, so its floor tabs cannot duplicate the rail's ids.
  */
 export function SidePanel({
   floor,
@@ -73,86 +78,87 @@ export function SidePanel({
   }, [legKey])
 
   return (
-    <div className={collapsed ? 'panel is-collapsed' : 'panel'} id="destination-panel">
-      {collapsed ? (
-        <div className="panel__rail">
-          <button
-            type="button"
-            className="panel__rail-btn panel__rail-btn--primary"
-            onClick={() => onToggleCollapsed(false)}
-            aria-expanded={false}
-            aria-controls="destination-panel"
-            aria-label="Show destinations panel"
-            title="Show destinations"
-          >
-            <ListTree size={20} aria-hidden="true" />
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
+    <div className={collapsed ? 'panel is-collapsed' : 'panel'}>
+      <div className={collapsed ? 'panel__top panel__rail' : 'panel__top panel__head'}>
+        {!collapsed && <DestinationSearch onPick={onSelect} inputRef={searchRef} />}
 
-          <button
-            type="button"
-            className="panel__rail-btn"
-            onClick={() => {
-              setFocusSearchOnOpen(true)
-              onToggleCollapsed(false)
-            }}
-            aria-label="Search for a destination"
-            title="Search"
-          >
-            <Search size={20} aria-hidden="true" />
-          </button>
+        <button
+          type="button"
+          className={collapsed ? 'panel__rail-btn panel__rail-btn--primary' : 'panel__collapse'}
+          onClick={() => onToggleCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          aria-controls="panel-body"
+          aria-label={
+            collapsed ? 'Show destinations panel' : 'Hide destinations panel to widen the map'
+          }
+          title={collapsed ? 'Show destinations' : 'Hide panel'}
+        >
+          {collapsed ? (
+            <>
+              <ListTree size={20} aria-hidden="true" />
+              <ChevronRight size={16} aria-hidden="true" />
+            </>
+          ) : (
+            <ChevronLeft size={20} aria-hidden="true" />
+          )}
+        </button>
 
-          <div className="panel__rail-rule" role="presentation" />
-
-          <FloorSelector value={floor} onChange={onFloorChange} variant="rail" />
-        </div>
-      ) : (
-        <>
-          <div className="panel__head">
-            <DestinationSearch onPick={onSelect} inputRef={searchRef} />
+        {collapsed && (
+          <>
             <button
               type="button"
-              className="panel__collapse"
-              onClick={() => onToggleCollapsed(true)}
-              aria-expanded
-              aria-controls="destination-panel"
-              aria-label="Hide destinations panel to widen the map"
-              title="Hide panel"
+              className="panel__rail-btn"
+              onClick={() => {
+                setFocusSearchOnOpen(true)
+                onToggleCollapsed(false)
+              }}
+              aria-label="Search for a destination"
+              title="Search"
             >
-              <ChevronLeft size={20} aria-hidden="true" />
+              <Search size={20} aria-hidden="true" />
             </button>
-          </div>
 
-          <FloorSelector value={floor} onChange={onFloorChange} />
+            <div className="panel__rail-rule" role="presentation" />
 
-          {selected ? (
-            <section className="panel__details" aria-label={`${selected.name} details`}>
-              <button type="button" className="panel__back" onClick={onClearSelection}>
-                <ChevronLeft size={17} aria-hidden="true" />
-                All destinations
-              </button>
-              <LocationCard
-                location={selected}
-                routeShown={journey !== null}
-                floorHint={floorHint}
-                onRoute={onRoute}
-              />
-              {journey && (
-                <div ref={routeRef}>
-                  <RouteInstructions
-                    journey={journey}
-                    legIndex={legIndex}
-                    onGoToLeg={onGoToLeg}
-                    onHide={onHideRoute}
-                  />
-                </div>
-              )}
-            </section>
-          ) : (
-            <DestinationList floor={floor} selectedId={null} onSelect={onSelect} />
-          )}
-        </>
-      )}
+            <FloorSelector value={floor} onChange={onFloorChange} variant="rail" />
+          </>
+        )}
+      </div>
+
+      <div id="panel-body" className="panel__body" hidden={collapsed}>
+        {!collapsed && (
+          <>
+            <FloorSelector value={floor} onChange={onFloorChange} />
+
+            {selected ? (
+              <section className="panel__details" aria-label={`${selected.name} details`}>
+                <button type="button" className="panel__back" onClick={onClearSelection}>
+                  <ChevronLeft size={17} aria-hidden="true" />
+                  All destinations
+                </button>
+                <LocationCard
+                  location={selected}
+                  routeShown={journey !== null}
+                  floorHint={floorHint}
+                  onRoute={onRoute}
+                />
+                {journey && (
+                  <div ref={routeRef}>
+                    <RouteInstructions
+                      journey={journey}
+                      legIndex={legIndex}
+                      onGoToLeg={onGoToLeg}
+                      onHide={onHideRoute}
+                    />
+                  </div>
+                )}
+              </section>
+            ) : (
+              <DestinationList floor={floor} selectedId={null} onSelect={onSelect} />
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

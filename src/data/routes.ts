@@ -188,7 +188,7 @@ function mergeStraight(hops: Segment[]): Segment[] {
  * Only the route's own geometry is used — nothing is invented, and no
  * landmark is named that is not the origin or the destination itself.
  */
-function buildSteps(points: Pt[], originLabel: string, destLabel: string): RouteStep[] {
+export function buildSteps(points: Pt[], originLabel: string, destLabel: string): RouteStep[] {
   const steps: RouteStep[] = [{ kind: 'start', text: `Start at the ${originLabel}.` }]
 
   const segs: Segment[] = []
