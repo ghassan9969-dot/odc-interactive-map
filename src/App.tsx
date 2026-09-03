@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Header } from './components/Header'
 import { CampusIntroduction } from './components/CampusIntroduction'
-import { DestinationSearch } from './components/DestinationSearch'
-import { FloorSelector } from './components/FloorSelector'
-import { DestinationList } from './components/DestinationList'
 import { FloorMap } from './components/FloorMap'
-import { LocationCard } from './components/LocationCard'
 import { MapLegend } from './components/MapLegend'
-import { RouteInstructions } from './components/RouteInstructions'
+import { SidePanel } from './components/SidePanel'
 import { buildRoute, floorChangeHint, type Route } from './data/routes'
 import type { FloorId, Location } from './data/types'
 
@@ -16,6 +12,7 @@ export default function App() {
   const [selected, setSelected] = useState<Location | null>(null)
   const [route, setRoute] = useState<Route | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ id: string; nonce: number } | null>(null)
+  const [panelCollapsed, setPanelCollapsed] = useState(false)
 
   /** Changing floor clears the previous card and route. */
   const changeFloor = useCallback((next: FloorId) => {
@@ -34,6 +31,8 @@ export default function App() {
         setRoute(null)
       }
       setSelected(location)
+      // The details live in the side panel, so it has to be open to see them.
+      setPanelCollapsed(false)
       if (options.center !== false) {
         setFocusTarget((prev) => ({ id: location.id, nonce: (prev?.nonce ?? 0) + 1 }))
       }
@@ -69,55 +68,38 @@ export default function App() {
       <CampusIntroduction />
 
       <main className="workspace">
-        <div className="panel">
-          <DestinationSearch onPick={(loc) => selectLocation(loc)} />
-          <FloorSelector value={floor} onChange={changeFloor} />
-          <DestinationList
+        <SidePanel
+          floor={floor}
+          selected={selected}
+          route={route}
+          routeShown={routeIsForSelection}
+          floorHint={selected ? floorChangeHint(selected) : null}
+          collapsed={panelCollapsed}
+          onToggleCollapsed={setPanelCollapsed}
+          onFloorChange={changeFloor}
+          onSelect={(loc) => selectLocation(loc)}
+          onClearSelection={clearSelection}
+          onRoute={showRoute}
+          onHideRoute={() => setRoute(null)}
+        />
+
+        <section
+          className="stage"
+          id="floor-map-panel"
+          role="tabpanel"
+          aria-labelledby={`floor-tab-${floor}`}
+        >
+          <FloorMap
             floor={floor}
             selectedId={selected?.id ?? null}
-            onSelect={(loc) => selectLocation(loc)}
+            route={routeIsForSelection ? route : null}
+            onSelect={(loc) => selectLocation(loc, { center: false })}
+            onClearSelection={clearSelection}
+            focusTarget={focusTarget}
           />
-        </div>
 
-        <div className="stage-wrap">
-          <section
-            className="stage"
-            id="floor-map-panel"
-            role="tabpanel"
-            aria-labelledby={`floor-tab-${floor}`}
-          >
-            <FloorMap
-              floor={floor}
-              selectedId={selected?.id ?? null}
-              route={routeIsForSelection ? route : null}
-              onSelect={(loc) => selectLocation(loc, { center: false })}
-              onClearSelection={clearSelection}
-              focusTarget={focusTarget}
-            />
-
-            <MapLegend />
-          </section>
-
-          {selected && (
-            <LocationCard
-              location={selected}
-              routeShown={routeIsForSelection}
-              floorHint={floorChangeHint(selected)}
-              onClose={clearSelection}
-              onRoute={showRoute}
-              onHideRoute={() => setRoute(null)}
-            />
-          )}
-
-          {routeIsForSelection && route && selected && (
-            <RouteInstructions
-              route={route}
-              target={selected}
-              floor={floor}
-              onHide={() => setRoute(null)}
-            />
-          )}
-        </div>
+          <MapLegend />
+        </section>
       </main>
 
       <p className="visually-hidden" aria-live="polite">

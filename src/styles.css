@@ -210,6 +210,118 @@ button {
   min-height: 0;
 }
 
+.panel.is-collapsed {
+  width: 56px;
+  flex: 0 0 56px;
+}
+
+.panel__head {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.panel__head .search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.panel__collapse {
+  flex: 0 0 auto;
+  width: 46px;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--teal-dark);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s ease;
+}
+
+.panel__collapse:hover {
+  background: var(--teal-light);
+}
+
+/* Collapsed rail: keeps reopening, search and floors one tap away. */
+.panel__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel__rail-btn {
+  width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--teal-dark);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease;
+}
+
+.panel__rail-btn:hover {
+  background: var(--teal-light);
+}
+
+.panel__rail-btn--primary {
+  background: var(--teal);
+  color: #fff;
+  gap: 0;
+  box-shadow: 0 2px 8px rgba(8, 126, 146, 0.3);
+}
+
+.panel__rail-btn--primary:hover {
+  background: var(--teal-dark);
+}
+
+.panel__rail-rule {
+  width: 28px;
+  height: 1px;
+  background: var(--line);
+}
+
+/* Details view replaces the list when a destination is chosen. */
+.panel__details {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel__back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--teal-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.panel__back:hover {
+  background: var(--bg);
+}
+
 /* ---------------------------------------------------------------- */
 /* Search                                                            */
 /* ---------------------------------------------------------------- */
@@ -324,6 +436,22 @@ button {
 /* ---------------------------------------------------------------- */
 /* Floor selector                                                    */
 /* ---------------------------------------------------------------- */
+
+.floors--rail {
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.floors--rail .floor-tab {
+  width: 44px;
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding: 0;
+}
 
 .floors {
   display: flex;
@@ -493,15 +621,6 @@ button {
 /* ---------------------------------------------------------------- */
 /* Map stage                                                         */
 /* ---------------------------------------------------------------- */
-
-.stage-wrap {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 
 .stage {
   position: relative;
@@ -704,16 +823,7 @@ button {
 /* ---------------------------------------------------------------- */
 
 .card {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 320px;
-  max-width: calc(100% - 24px);
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
   animation: card-in 0.2s ease-out;
 }
 
@@ -762,21 +872,6 @@ button {
 .card__floor {
   font-weight: 700;
   color: var(--teal-dark);
-}
-
-.card__close {
-  border: 0;
-  background: transparent;
-  color: var(--ink-muted);
-  padding: 7px;
-  border-radius: 8px;
-  display: inline-flex;
-  flex: 0 0 auto;
-}
-
-.card__close:hover {
-  background: var(--bg);
-  color: var(--ink);
 }
 
 .card__body {
@@ -846,17 +941,12 @@ button {
 /* ---------------------------------------------------------------- */
 
 .route-bar {
-  position: absolute;
-  left: 12px;
-  top: 66px;
-  width: 292px;
-  max-width: calc(100% - 24px);
-  background: var(--surface);
+  margin: 0 11px 12px;
+  background: #fffaf5;
   border: 1px solid #f0d3b4;
   border-left: 4px solid var(--route);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
-  padding: 11px 13px;
+  border-radius: 10px;
+  padding: 10px 12px;
   animation: card-in 0.2s ease-out;
 }
 
@@ -1094,6 +1184,74 @@ button {
 /* Responsive                                                        */
 /* ---------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------
+   Landscape tablet (iPad 1024x768 / 1194x834) and any short wide
+   window: shrink the chrome so the plan gets the room it needs.
+   Desktop windows taller than 860px with a fine pointer are untouched.
+   ---------------------------------------------------------------- */
+
+@media (min-width: 901px) and (max-height: 860px),
+  (min-width: 901px) and (pointer: coarse) {
+  :root {
+    --panel-w: 300px;
+  }
+
+  .header {
+    padding: 5px 14px;
+    gap: 10px;
+  }
+  .header__logo {
+    height: 32px;
+  }
+  .header__titles h1 {
+    font-size: 15px;
+  }
+  .header__titles p {
+    font-size: 11.5px;
+  }
+  .header__badge {
+    padding: 5px 11px;
+    font-size: 12px;
+  }
+
+  /* Introduction folds into a single slim row. */
+  .intro {
+    padding: 5px 14px;
+    gap: 12px;
+  }
+  .intro__media {
+    width: 78px;
+    height: 44px;
+    border-radius: 8px;
+  }
+  .intro__body {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .intro__body h2 {
+    font-size: 15px;
+  }
+  .intro__body p {
+    margin: 0;
+    font-size: 12.5px;
+  }
+
+  .workspace {
+    padding: 8px 14px 10px;
+    gap: 10px;
+  }
+
+  .stage {
+    border-radius: 12px;
+  }
+
+  .legend {
+    max-width: min(420px, calc(100% - 24px));
+  }
+}
+
 @media (max-width: 1180px) {
   :root {
     --panel-w: 296px;
@@ -1131,12 +1289,8 @@ button {
     flex: 0 0 auto;
     order: 2;
   }
-  .stage-wrap {
-    order: 1;
-    display: block;
-    flex: 0 0 auto;
-  }
   .stage {
+    order: 1;
     height: 58vh;
     min-height: 400px;
     flex: 0 0 auto;
@@ -1144,12 +1298,24 @@ button {
   .dest-list {
     max-height: 420px;
   }
-  .card,
-  .route-bar {
-    position: static;
+  .panel__details {
+    max-height: 520px;
+  }
+  /* Stacked layout: a collapsed panel becomes a slim horizontal bar. */
+  .panel.is-collapsed {
     width: 100%;
-    max-width: none;
-    margin-top: 12px;
+    flex: 0 0 auto;
+  }
+  .panel__rail,
+  .floors--rail {
+    flex-direction: row;
+  }
+  .panel__rail-rule {
+    width: 1px;
+    height: 28px;
+  }
+  .panel__collapse {
+    display: none;
   }
 }
 

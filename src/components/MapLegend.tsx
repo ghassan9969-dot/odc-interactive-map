@@ -4,8 +4,17 @@ import { CATEGORIES } from '../data/floors'
 
 const ORDER = ['clinical', 'learning', 'laboratory', 'food', 'administration', 'reception', 'secondary'] as const
 
+/**
+ * On a tablet — or any short window — the legend starts collapsed so it
+ * does not eat into the plan. Roomy desktops keep it open.
+ */
+const startCollapsed = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(max-height: 860px), (pointer: coarse)').matches
+
 export function MapLegend() {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(() => !startCollapsed())
 
   return (
     <div className="legend">

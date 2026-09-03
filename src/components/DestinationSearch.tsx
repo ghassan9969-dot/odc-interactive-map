@@ -7,6 +7,8 @@ import { UiMapIcon } from './MapIcon'
 
 interface Props {
   onPick: (location: Location) => void
+  /** Lets the collapsed panel rail focus the field when it reopens. */
+  inputRef?: React.MutableRefObject<HTMLInputElement | null>
 }
 
 /** Rank a location against the query; lower is better, -1 means no match. */
@@ -24,12 +26,13 @@ function score(location: Location, query: string): number {
   return -1
 }
 
-export function DestinationSearch({ onPick }: Props) {
+export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const localRef = useRef<HTMLInputElement | null>(null)
+  const inputRef = externalRef ?? localRef
   const listId = useId()
 
   const results = useMemo(() => {
