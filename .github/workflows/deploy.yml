@@ -3,21 +3,28 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
-# Allow the workflow to publish to Pages.
+# Allow the workflow to publish to Pages. Pull requests from forks get a
+# read-only token regardless, and they never reach the deploy job anyway.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Let a running deployment finish; queue at most one more.
+# Let a running deployment finish; queue at most one more. Pull request
+# runs are keyed per branch so a new push supersedes the previous check.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Runs for every trigger, including pull requests, so a broken branch
+  # is caught before it can be merged.
   build:
+    name: Test, type-check and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # A failure in any of these three stops the job, and with it the
+      # A failure in any of these three fails the job, and with it the
       # deploy job that needs it, so a broken build never reaches Pages.
       - name: Test
         run: npm test
@@ -41,14 +48,21 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Publishing steps are skipped on pull requests: nothing is uploaded
+      # and no Pages configuration is touched while reviewing a branch.
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
+  # Only pushes to main and manual runs publish. Never a pull request.
   deploy:
+    name: Deploy to Pages
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
