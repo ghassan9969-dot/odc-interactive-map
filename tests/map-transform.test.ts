@@ -8,7 +8,9 @@ import {
   clientDeltaToViewBox,
   clientToViewBox,
   constrain,
+  dragStep,
   fitBox,
+  isGesture,
   panBy,
   pinchStep,
   toSvgTransform,
@@ -212,5 +214,144 @@ describe('serialising the transform', () => {
   it('treats imperceptible differences as equal, so no needless render', () => {
     expect(transformsEqual({ k: 1, x: 0, y: 0 }, { k: 1.00001, x: 0.0001, y: 0 })).toBe(true)
     expect(transformsEqual({ k: 1, x: 0, y: 0 }, { k: 1.05, x: 0, y: 0 })).toBe(false)
+  })
+})
+
+describe('deciding between a tap and a drag', () => {
+  /** Walk a one-finger press through the same helpers the hook uses. */
+  function press(steps: Pt[], from: Pt = [500, 400]) {
+    const state = { origin: from, last: from, dragging: false }
+    let t = IDENTITY
+    let applied: Pt = [0, 0]
+    for (const [x, y] of steps) {
+      const step = dragStep(state, x, y)
+      if (step) {
+        state.dragging = true
+        applied = [applied[0] + step.dx, applied[1] + step.dy]
+        t = panBy(t, step.dx, step.dy, W, H)
+      }
+      state.last = [x, y]
+    }
+    return { transform: t, applied, dragging: state.dragging }
+  }
+
+  it('pans for a slow drag made of ten one-pixel moves', () => {
+    // The bug this guards: measured against the previous event, every
+    // one of these is 1px, so the map never moved at all.
+    const steps: Pt[] = Array.from({ length: 10 }, (_, i) => [500 + i + 1, 400])
+    const { transform, dragging } = press(steps)
+    expect(dragging).toBe(true)
+    expect(transform.x).toBeCloseTo(10, 6)
+  })
+
+  it('crosses the threshold on cumulative travel, not on one big step', () => {
+    const slow = press(Array.from({ length: 10 }, (_, i): Pt => [500 + i + 1, 400]))
+    const fast = press([[510, 400]])
+    expect(slow.transform.x).toBeCloseTo(fast.transform.x, 6)
+  })
+
+  it('loses no movement when the threshold is crossed', () => {
+    // The first two moves are held back; the third must pay all three.
+    const state = { origin: [500, 400] as Pt, last: [500, 400] as Pt, dragging: false }
+    expect(dragStep(state, 501, 400)).toBeNull()
+    state.last = [501, 400]
+    expect(dragStep(state, 502, 400)).toBeNull()
+    state.last = [502, 400]
+    expect(dragStep(state, 503, 400)).toEqual({ dx: 3, dy: 0 })
+  })
+
+  it('stays a tap while the finger has not really travelled', () => {
+    const { transform, dragging } = press([
+      [500.5, 400],
+      [501, 400.5],
+      [501, 401],
+      [500, 400],
+    ])
+    expect(dragging).toBe(false)
+    expect(transform).toEqual(IDENTITY)
+  })
+
+  it('measures diagonal travel, not one axis at a time', () => {
+    const state = { origin: [500, 400] as Pt, last: [500, 400] as Pt, dragging: false }
+    // Neither axis reaches 3px on its own, but together they pass it.
+    expect(dragStep(state, 502.5, 402.5)).toEqual({ dx: 2.5, dy: 2.5 }) // hypot 3.54
+    expect(dragStep(state, 502, 402)).toBeNull() // hypot 2.83
+  })
+
+  it('switches to incremental deltas once it is dragging', () => {
+    const state = { origin: [500, 400] as Pt, last: [520, 400] as Pt, dragging: true }
+    // Not 21px from the origin: 1px from the last position.
+    expect(dragStep(state, 521, 400)).toEqual({ dx: 1, dy: 0 })
+  })
+})
+
+describe('when a press must not select a room', () => {
+  it('treats a press that travelled as a gesture', () => {
+    expect(isGesture({ dragging: true, maxPointers: 1 })).toBe(true)
+  })
+
+  it('treats any second finger as a gesture, even without travel', () => {
+    expect(isGesture({ dragging: false, maxPointers: 2 })).toBe(true)
+  })
+
+  it('leaves a still, single-finger press as a tap', () => {
+    expect(isGesture({ dragging: false, maxPointers: 1 })).toBe(false)
+  })
+})
+
+describe('adding and removing the second finger', () => {
+  const W2 = W
+  /** Distance and midpoint of two fingers, as the hook computes them. */
+  const reference = (a: Pt, b: Pt) => ({
+    dist: Math.hypot(a[0] - b[0], a[1] - b[1]),
+    mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] as Pt,
+  })
+
+  it('does not move the map when a second finger lands', () => {
+    // Landing only takes a reference; nothing is applied until a move.
+    const start: Transform = { k: 1.4, x: -80, y: 30 }
+    const ref = reference([400, 300], [600, 500])
+    expect(pinchStep(start, ref, ref, W2, H)).toEqual(start)
+  })
+
+  it('does not move the map when one of two fingers lifts', () => {
+    // The hook re-takes the reference on the way down as well, so the
+    // first move afterwards is measured from where the fingers are.
+    let t: Transform = { k: 2, x: -300, y: -200 }
+    const spread = reference([400, 300], [600, 500])
+    t = pinchStep(t, spread, spread, W2, H)
+    const remaining = { origin: [400, 300] as Pt, last: [400, 300] as Pt, dragging: true }
+    const step = dragStep(remaining, 400, 300)
+    expect(step).toEqual({ dx: 0, dy: 0 })
+    expect(t).toEqual({ k: 2, x: -300, y: -200 })
+  })
+
+  it('keeps a whole 1 -> 2 -> 1 finger sequence continuous', () => {
+    let t = IDENTITY
+    // One finger drags 40px right.
+    const single = { origin: [500, 400] as Pt, last: [500, 400] as Pt, dragging: false }
+    const first = dragStep(single, 540, 400)!
+    t = panBy(t, first.dx, first.dy, W2, H)
+    single.dragging = true
+    single.last = [540, 400]
+    const afterPan = { ...t }
+
+    // A second finger lands: reference taken, nothing applied.
+    let ref = reference([540, 400], [740, 400])
+    t = pinchStep(t, ref, ref, W2, H)
+    expect(t).toEqual(afterPan)
+
+    // They spread to double the distance about the same midpoint.
+    const spread = reference([440, 400], [840, 400])
+    t = pinchStep(t, ref, spread, W2, H)
+    expect(t.k).toBeCloseTo(2, 6)
+    const afterPinch = { ...t }
+
+    // The second finger lifts: reference dropped, nothing applied.
+    ref = spread
+    single.last = [440, 400]
+    const resumed = dragStep(single, 440, 400)!
+    t = panBy(t, resumed.dx, resumed.dy, W2, H)
+    expect(t).toEqual(afterPinch)
   })
 })

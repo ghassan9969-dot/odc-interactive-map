@@ -8,7 +8,9 @@ import {
   clientToViewBox,
   clientDeltaToViewBox,
   constrain,
+  dragStep,
   fitBox,
+  isGesture,
   panBy,
   pinchStep,
   toSvgTransform,
@@ -22,8 +24,14 @@ import {
 export { MIN_SCALE, MAX_SCALE }
 export type { Transform }
 
-/** Movement, in CSS pixels, before a press becomes a drag. */
-const DRAG_THRESHOLD = 3
+/** Ask for the pointer, but never fail over one that has already gone. */
+function capturePointer(el: Element, pointerId: number) {
+  try {
+    el.setPointerCapture?.(pointerId)
+  } catch {
+    // Capture is an optimisation here; the gesture works without it.
+  }
+}
 
 /**
  * Pan / zoom for a floor map, built so a gesture never renders React.
@@ -50,6 +58,12 @@ export function useMapTransform(width: number, height: number) {
   const pinch = useRef<{ dist: number; mid: Pt } | null>(null)
   const dragging = useRef(false)
   const gesturing = useRef(false)
+  /** Where the single finger landed, so slow drags still accumulate. */
+  const origin = useRef<Pt | null>(null)
+  /** Most fingers seen during this press; two means it was a pinch. */
+  const maxPointers = useRef(0)
+  /** Set as the press ends, and read by the click that follows it. */
+  const wasGesture = useRef(false)
   /** Client-space to viewBox mapping, refreshed rather than recomputed. */
   const viewport = useRef<ViewportMap | null>(null)
 
@@ -162,10 +176,16 @@ export function useMapTransform(width: number, height: number) {
   const endGesture = useCallback(() => {
     cancelFrame()
     const settled = live.current
+    // Decided here, because the click arrives after this state is gone.
+    wasGesture.current = isGesture({
+      dragging: dragging.current,
+      maxPointers: maxPointers.current,
+    })
     setGesturing(false)
     pointers.current.clear()
     pinch.current = null
     dragging.current = false
+    origin.current = null
     paint(settled)
     setTransform((current) => (transformsEqual(current, settled) ? current : settled))
   }, [cancelFrame, paint, setGesturing])
@@ -176,8 +196,20 @@ export function useMapTransform(width: number, height: number) {
       // resets the reference the next move is measured against.
       refreshViewport()
       pointers.current.set(e.pointerId, [e.clientX, e.clientY])
-      if (pointers.current.size === 1) setGesturing(true)
+      maxPointers.current = Math.max(maxPointers.current, pointers.current.size)
+      if (pointers.current.size === 1) {
+        // A fresh press: nothing to swallow until it actually travels.
+        maxPointers.current = 1
+        wasGesture.current = false
+        origin.current = [e.clientX, e.clientY]
+        setGesturing(true)
+      }
       if (pointers.current.size >= 2) {
+        // Two fingers are a gesture from the very first frame, never a
+        // tap, so both are captured and the click is written off now.
+        dragging.current = true
+        const target = e.currentTarget as Element
+        for (const id of pointers.current.keys()) capturePointer(target, id)
         const [a, b] = [...pointers.current.values()]
         pinch.current = {
           dist: Math.hypot(a[0] - b[0], a[1] - b[1]),
@@ -210,24 +242,25 @@ export function useMapTransform(width: number, height: number) {
         return
       }
 
-      const moved = Math.hypot(e.clientX - previous[0], e.clientY - previous[1])
+      const start = origin.current
+      if (!start) return
+      // Measured from where the finger landed while the press is still
+      // undecided, so a slow drag of one-pixel steps accumulates.
+      const step = dragStep(
+        { origin: start, last: previous, dragging: dragging.current },
+        e.clientX,
+        e.clientY,
+      )
+      if (!step) return
+
       if (!dragging.current) {
         // Capture only once this is really a drag, so a tap still
         // reaches the room underneath as a click.
-        if (moved < DRAG_THRESHOLD) return
         dragging.current = true
-        try {
-          ;(e.currentTarget as Element).setPointerCapture?.(e.pointerId)
-        } catch {
-          // The pointer may already be gone; panning still works without it.
-        }
+        capturePointer(e.currentTarget as Element, e.pointerId)
       }
 
-      const [dx, dy] = clientDeltaToViewBox(
-        map,
-        e.clientX - previous[0],
-        e.clientY - previous[1],
-      )
+      const [dx, dy] = clientDeltaToViewBox(map, step.dx, step.dy)
       live.current = panBy(live.current, dx, dy, width, height)
       schedulePaint()
     },
@@ -250,13 +283,37 @@ export function useMapTransform(width: number, height: number) {
         return
       }
       // Down to one finger: forget the pinch reference so the remaining
-      // finger carries on panning from where it is, with no jump.
+      // finger carries on panning from where it is, with no jump. It is
+      // already past the threshold, so it moves incrementally.
       pinch.current = null
-      if (pointers.current.size === 1) return
+      if (pointers.current.size === 1) {
+        origin.current = [...pointers.current.values()][0]
+        return
+      }
       endGesture()
     },
     [endGesture, toViewBox],
   )
+
+  /*
+   * Swallow the click a gesture ends with, so panning across a room
+   * never selects it. Pointer capture usually retargets that click
+   * away on its own, but not on every engine, and not for the click
+   * synthesised from a multi-touch sequence. Stopping it at the <svg>
+   * keeps it from reaching React's listener on the root.
+   */
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const swallow = (e: MouseEvent) => {
+      if (!wasGesture.current) return
+      wasGesture.current = false
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    svg.addEventListener('click', swallow)
+    return () => svg.removeEventListener('click', swallow)
+  }, [])
 
   /* Wheel is registered manually so it can be non-passive. */
   useEffect(() => {

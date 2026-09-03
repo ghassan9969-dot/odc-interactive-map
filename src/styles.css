@@ -686,8 +686,12 @@ button {
   filter: none !important;
 }
 
-/* Hover and selection transitions would fight the per-frame writes. */
+/* A touch leaves rooms in :hover as it passes over them, so the hover
+   brightness would add a filter buffer per room, mid-gesture, on the
+   very frames that can least afford one. Transitions would fight the
+   per-frame writes too. */
 .stage__canvas svg.is-gesturing .room__shape {
+  filter: none !important;
   transition: none !important;
 }
 

@@ -159,3 +159,59 @@ export function clientToViewBox(map: ViewportMap, clientX: number, clientY: numb
 export function clientDeltaToViewBox(map: ViewportMap, dx: number, dy: number): Pt {
   return [dx / map.scale, dy / map.scale]
 }
+
+/* ------------------------------------------------------------------ */
+/* Press, drag or gesture                                              */
+/* ------------------------------------------------------------------ */
+
+/** Travel, in CSS pixels, before a press becomes a drag. */
+export const DRAG_THRESHOLD = 3
+
+export interface DragState {
+  /** Where the finger landed. */
+  origin: Pt
+  /** Where it was on the previous move. */
+  last: Pt
+  dragging: boolean
+}
+
+/** What a single-finger move should do, in client pixels. */
+export interface DragMove {
+  dx: number
+  dy: number
+}
+
+/**
+ * Decide how far a one-finger move should pan, or `null` while the
+ * press is still a tap.
+ *
+ * The threshold is measured from where the finger landed, never from
+ * the previous event: a slow drag made of one-pixel steps would never
+ * clear a per-event threshold, and so would never pan at all. Once it
+ * does clear, the whole displacement since touchdown is returned in one
+ * go, because none of it has been applied yet.
+ */
+export function dragStep(
+  state: DragState,
+  clientX: number,
+  clientY: number,
+  threshold = DRAG_THRESHOLD,
+): DragMove | null {
+  if (state.dragging) {
+    return { dx: clientX - state.last[0], dy: clientY - state.last[1] }
+  }
+  const dx = clientX - state.origin[0]
+  const dy = clientY - state.origin[1]
+  if (Math.hypot(dx, dy) < threshold) return null
+  return { dx, dy }
+}
+
+/**
+ * Whether the click ending this press must be swallowed.
+ *
+ * A press that travelled, or that ever had a second finger on it, was a
+ * gesture on the map rather than a tap on a room.
+ */
+export function isGesture(state: { dragging: boolean; maxPointers: number }): boolean {
+  return state.dragging || state.maxPointers > 1
+}
