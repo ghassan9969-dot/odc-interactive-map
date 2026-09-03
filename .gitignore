@@ -1,0 +1,10 @@
+node_modules
+dist
+*.local
+
+# Source architectural drawings and the raw supplied images.
+# These are as-built drawings carrying the consultant's and contractor's
+# details, signatures and stamps — keep them out of a public repository.
+# The logo and campus photo used by the site live in src/assets/ instead.
+*.pdf
+WhatsApp Image*.jpeg
