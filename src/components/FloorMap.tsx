@@ -106,14 +106,12 @@ export function FloorMap({
     fitTo({ x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w, h }, 1.08, 1.8)
   }, [route, fitTo, def.width, def.height])
 
-  const { k, x, y } = map.transform
-
   const Decor =
     floor === 'ground' ? GroundFloorDecor : floor === 'first' ? FirstFloorDecor : SecondFloorDecor
 
   return (
     <>
-      <div className={`stage__canvas${map.isPanning ? ' is-panning' : ''}`}>
+      <div className="stage__canvas">
         <svg
           ref={map.svgRef}
           viewBox={`0 0 ${def.width} ${def.height}`}
@@ -130,18 +128,18 @@ export function FloorMap({
           onPointerLeave={map.handlers.onPointerLeave}
         >
           <defs>
-            <filter id="room-lift" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="2.5" stdDeviation="2.4" floodColor="#0c3c46" floodOpacity="0.2" />
-            </filter>
-            <filter id="room-lift-strong" x="-40%" y="-40%" width="180%" height="180%">
-              <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#0c3c46" floodOpacity="0.34" />
+            {/* One shadow, for the selected room only. Every room used
+                to carry a filter, which meant an offscreen buffer each
+                to recompose on every frame of a gesture. */}
+            <filter id="room-lift-strong" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0c3c46" floodOpacity="0.3" />
             </filter>
             <filter id="plan-shadow" x="-10%" y="-10%" width="130%" height="130%">
               <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#0c3c46" floodOpacity="0.16" />
             </filter>
           </defs>
 
-          <g transform={`translate(${x} ${y}) scale(${k})`}>
+          <g ref={map.layerRef}>
             {/* --- building envelope ------------------------------ */}
             <path d={toPath(def.outline)} className="map__outline" filter="url(#plan-shadow)" />
 
@@ -236,7 +234,7 @@ export function FloorMap({
                       }
                     }}
                     transform={selected ? 'translate(0 -3)' : undefined}
-                    filter={selected ? 'url(#room-lift-strong)' : 'url(#room-lift)'}
+                    filter={selected ? 'url(#room-lift-strong)' : undefined}
                   >
                     {loc.shape.polys.map((p, i) => (
                       <path
@@ -333,7 +331,8 @@ export function FloorMap({
       </div>
 
       <MapControls
-        scale={k}
+        scale={map.transform.k}
+        readoutRef={map.zoomLabelRef}
         onZoomIn={map.zoomIn}
         onZoomOut={map.zoomOut}
         onFit={map.reset}
