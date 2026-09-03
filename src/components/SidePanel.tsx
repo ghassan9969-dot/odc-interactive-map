@@ -61,11 +61,15 @@ export function SidePanel({
   }, [collapsed, focusSearchOnOpen])
 
   // Bring the current leg — and its Continue button — into view whenever
-  // navigation starts or moves to the next floor.
+  // navigation starts or moves to the next floor. Visitors who have asked
+  // for reduced motion get the jump without the animation.
   const legKey = journey ? `${journey.target.id}:${legIndex}` : null
   useEffect(() => {
     if (!legKey) return
-    routeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const reduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    routeRef.current?.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' })
   }, [legKey])
 
   return (

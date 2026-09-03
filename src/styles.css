@@ -295,6 +295,7 @@ button {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1020,7 +1021,10 @@ button {
 .route-bar__actions .btn {
   width: 100%;
   min-height: 46px;
+  padding: 8px 12px;
   font-size: 14px;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 /* ---------------------------------------------------------------- */

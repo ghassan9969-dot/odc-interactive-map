@@ -71,7 +71,7 @@ export function RouteInstructions({ journey, legIndex, onGoToLeg, onHide }: Prop
         {previous && (
           <button type="button" className="btn btn--ghost" onClick={() => onGoToLeg(legIndex - 1)}>
             <ChevronLeft size={17} aria-hidden="true" />
-            Back to the {FLOOR_BY_ID[previous.floor].name} route
+            Back to {FLOOR_BY_ID[previous.floor].name}
           </button>
         )}
         <button type="button" className="btn btn--ghost" onClick={onHide}>

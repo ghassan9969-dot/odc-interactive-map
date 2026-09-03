@@ -153,16 +153,33 @@ function turnAngle(a: Segment, b: Segment): number {
 
 /** A turn smaller than this reads as "carry on", not as a turn. */
 const STRAIGHT_DEG = 28
-/** Hops shorter than this are absorbed into the previous instruction. */
-const MIN_LEG_UNITS = 4.5 * UNITS_PER_METRE
-/** Even the longest walk gets no more instructions than this. */
-const MAX_LEGS = 6
+/** The step through a doorway, reported as the arrival side instead. */
+const DOOR_STUB_UNITS = 4.5 * UNITS_PER_METRE
+/** A sidestep no longer than this may be folded away — but only when it
+ *  leaves the direction of travel unchanged, so no real turn is lost. */
+const MICRO_JOG_UNITS = 6 * UNITS_PER_METRE
+/** A stub at the very start, before any heading has been established. */
+const START_STUB_UNITS = 2.5 * UNITS_PER_METRE
 
 /** Fold one hop into another, keeping the summed heading and distance. */
 function absorb(into: Segment, hop: Segment) {
   into.dx += hop.dx
   into.dy += hop.dy
   into.len += hop.len
+}
+
+/** Join hops that continue in the same direction. Never hides a turn. */
+function mergeStraight(hops: Segment[]): Segment[] {
+  const out: Segment[] = []
+  for (const hop of hops) {
+    const prev = out[out.length - 1]
+    if (prev && Math.abs(turnAngle(prev, hop)) < STRAIGHT_DEG) {
+      absorb(prev, hop)
+      continue
+    }
+    out.push({ ...hop })
+  }
+  return out
 }
 
 /**
@@ -198,41 +215,38 @@ function buildSteps(points: Pt[], originLabel: string, destLabel: string): Route
     else if (a < -STRAIGHT_DEG) side = 'on your left'
   }
 
-  // Pass one: merge consecutive near-straight hops, and any hop too
-  // short to be worth an instruction of its own.
-  const walk: Segment[] = []
-  for (const s of segs) {
-    const prev = walk[walk.length - 1]
-    if (!prev) {
-      walk.push({ ...s })
-      continue
-    }
-    if (Math.abs(turnAngle(prev, s)) < STRAIGHT_DEG || s.len < MIN_LEG_UNITS) {
-      absorb(prev, s)
-      continue
-    }
-    walk.push({ ...s })
+  // The last hop is the step through the doorway. Its direction is
+  // already reported as the arrival side, so it is folded back rather
+  // than becoming a turn instruction of its own.
+  if (segs.length > 1 && approach.len < DOOR_STUB_UNITS) {
+    absorb(segs[segs.length - 2], approach)
+    segs.pop()
   }
 
-  // Pass two: a long cross-building walk can still collect more turns
-  // than anyone wants to read, so fold the shortest hops into whichever
-  // neighbour they most nearly continue.
-  while (walk.length > MAX_LEGS) {
-    let shortest = 0
-    for (let i = 1; i < walk.length; i++) if (walk[i].len < walk[shortest].len) shortest = i
-    const before = walk[shortest - 1]
-    const after = walk[shortest + 1]
-    const keepBefore =
-      after === undefined ||
-      (before !== undefined &&
-        Math.abs(turnAngle(before, walk[shortest])) <= Math.abs(turnAngle(walk[shortest], after)))
-    absorb(keepBefore ? before : after, walk[shortest])
-    walk.splice(shortest, 1)
+  // Pass one: join hops that carry straight on.
+  let walk = mergeStraight(segs)
+
+  // Pass two: drop harmless micro-jogs — a short sidestep whose
+  // neighbours still head the same way, so the direction of travel is
+  // unchanged. A short hop between two genuinely different headings is
+  // a real turn and is always kept, however long the list becomes.
+  for (let guard = 0; guard < walk.length; guard++) {
+    const jog = walk.findIndex(
+      (hop, i) =>
+        i > 0 &&
+        i < walk.length - 1 &&
+        hop.len <= MICRO_JOG_UNITS &&
+        Math.abs(turnAngle(walk[i - 1], walk[i + 1])) < STRAIGHT_DEG,
+    )
+    if (jog === -1) break
+    absorb(walk[jog - 1], walk[jog])
+    walk.splice(jog, 1)
+    walk = mergeStraight(walk)
   }
 
-  // A very short opening hop says nothing useful — the visitor has just
-  // stepped out of a lift or a doorway and has no established heading.
-  if (walk.length > 1 && walk[0].len < MIN_LEG_UNITS) {
+  // A stub at the very start says nothing useful — the visitor has just
+  // stepped out of a lift or a doorway with no heading to turn from.
+  if (walk.length > 1 && walk[0].len < START_STUB_UNITS) {
     absorb(walk[1], walk[0])
     walk.shift()
   }
