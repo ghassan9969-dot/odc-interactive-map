@@ -108,7 +108,10 @@ interface PgRow {
 }
 
 const PG_ROWS: PgRow[] = [
-  { b0: 12, b1: 74, a: [175, 232, 345, 402, 458, 519, 579, 636, 692, 749, 806] },
+  // Eleven spaces along the top row. The third from the west carries no
+  // cabinet tag on the sheet — it is the Head of Clinic Office, and the
+  // college's marked-up reference puts the office exactly there.
+  { b0: 12, b1: 74, a: [175, 232, 288, 345, 402, 458, 519, 579, 636, 692, 749] },
   { b0: 118, b1: 178, a: [175, 231, 288, 345, 401, 579, 636, 692, 749, 805] },
   { b0: 187, b1: 247, a: [174, 231, 288, 344, 401, 579, 635, 692, 749, 805] },
   { b0: 291, b1: 351, a: [174, 231, 344, 401, 579, 635, 692, 748, 805] },
@@ -116,6 +119,9 @@ const PG_ROWS: PgRow[] = [
 
 /** The Head of Clinic Office: third space from the western end, top row. */
 const HOC_A = PG_ROWS[0].a[2]
+
+/** The short unfitted run between the last treatment room and the toilets. */
+const PG_TAIL = { a0: 777.5, a1: 826 }
 
 const pgUnit = (a: number, row: PgRow): Pt[] => wRect(a - PG_HALF, row.b0, a + PG_HALF, row.b1)
 
@@ -140,9 +146,6 @@ export const groundCirculation: CirculationArea[] = [
   { id: 'g-circ-wing-n', floor: F, polys: [wRect(135, 74, 975, 118)] },
   { id: 'g-circ-wing-s', floor: F, polys: [wRect(135, 247, 975, 291)] },
   { id: 'g-circ-wing-cross', floor: F, polys: [wRect(874, 12, 896, 351)] },
-  // Short link out to the north-west exit, in the stretch of facade
-  // west of the first treatment space.
-  { id: 'g-circ-wing-nw', floor: F, polys: [wRect(88, 12, 132, 118)] },
 
   /* --- Postgraduate lobby, between the laboratory and the imaging
          column. The drawing labels this whole area "Circulation
@@ -275,31 +278,13 @@ export const groundLocations: Location[] = [
     primary: true,
   },
   {
-    id: 'g-exit-pg-west',
-    name: 'Postgraduate Clinic Exit (West)',
-    shortName: 'PG Exit West',
-    floor: F,
-    category: 'reception',
-    description:
-      'External exit at the western end of the Postgraduate Clinic wing, on the north side.',
-    icon: 'entrance',
-    shape: { polys: [wRect(96, 0, 124, 14)] },
-    label: w(110, 40),
-    labelSize: 12,
-    door: w(110, 16),
-    doorMarks: [w(110, 8)],
-    entryNode: 'wing_nw_exit',
-    keywords: ['exit', 'fire exit', 'way out', 'west'],
-    primary: false,
-  },
-  {
     id: 'g-exit-pg-east',
-    name: 'Postgraduate Clinic Exit (East)',
-    shortName: 'PG Exit East',
+    name: 'Postgraduate Clinic Exit',
+    shortName: 'PG Exit',
     floor: F,
     category: 'reception',
     description:
-      'External exit at the eastern end of the Postgraduate Clinic wing, beside the toilets.',
+      'External exit on the north side of the Postgraduate Clinic wing, beside the toilets at its eastern end.',
     icon: 'entrance',
     shape: { polys: [wRect(874, 0, 896, 12)] },
     label: w(885, 38),
@@ -392,12 +377,14 @@ export const groundLocations: Location[] = [
     shortName: 'HOC',
     floor: F,
     category: 'administration',
-    description: 'Office of the Head of the Postgraduate Clinic, on the north side of the wing.',
+    description:
+      'Office of the Head of the Postgraduate Clinic, third along the north row of the wing.',
     icon: 'office',
     shape: { polys: [pgUnit(HOC_A, PG_ROWS[0])] },
     label: w(HOC_A, 43),
     labelSize: 15,
     door: w(HOC_A, 76),
+    doorMarks: [w(HOC_A, 74)],
     entryNode: 'wing_n_2',
     keywords: ['head of clinic', 'hoc', 'office', 'director'],
     primary: false,
@@ -437,22 +424,6 @@ export const groundLocations: Location[] = [
     entryNode: 'wing_s_4',
     keywords: ['cone beam', 'ct', 'scan', 'imaging', '3d', 'x-ray', 'radiography'],
     primary: true,
-  },
-  {
-    id: 'g-pg-nurse',
-    name: 'Nurse Station (Postgraduate Clinic)',
-    shortName: 'Nurse Station',
-    floor: F,
-    category: 'clinical',
-    description: 'Nursing station serving the north row of the Postgraduate Clinic.',
-    icon: 'doctor',
-    shape: { polys: [wRect(259.5, 12, 316.5, 74)] },
-    label: w(288, 43),
-    labelSize: 12,
-    door: w(288, 76),
-    entryNode: 'wing_n_2',
-    keywords: ['nurse', 'nursing', 'station'],
-    primary: false,
   },
   {
     id: 'g-pg-surgery-1',
@@ -1115,6 +1086,7 @@ export const groundSecondary: SecondarySpace[] = [
     labelSize: 11,
   },
   technical('g-s-wing-store', [wRect(259.5, 291, 316.5, 351)]),
+  technical('g-s-wing-tail', [wRect(PG_TAIL.a0, 12, PG_TAIL.a1, 74)]),
   technical('g-s-compressor', [wRect(412, 351, 600, 425)]),
   technical('g-s-photography', [wRect(325, 351, 402, 398)]),
 
@@ -1305,8 +1277,6 @@ export const groundNodes: Record<string, Pt> = {
   park_in: g(1500, 1520),
 
   /* Angled wing corridors */
-  wing_nw_exit: w(110, 60),
-  wing_nw_link: w(110, 96),
   wing_n_1: w(200, 96),
   wing_n_2: w(288, 96),
   wing_n_3: w(400, 96),
@@ -1353,9 +1323,7 @@ export const groundEdges: [string, string][] = [
   ['pg_wn_out', 'wing_w_n'],
   ['pg_5', 'pg_ws_out'],
   ['pg_ws_out', 'wing_w_s'],
-  ['wing_w_n', 'wing_nw_link'],
-  ['wing_nw_link', 'wing_nw_exit'],
-  ['wing_nw_link', 'wing_n_1'],
+  ['wing_w_n', 'wing_n_1'],
   ['wing_w_s', 'wing_s_1'],
   ['pg_1', 'mc_w'],
 

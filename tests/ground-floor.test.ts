@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FLOOR_BY_ID } from '../src/data/floors'
-import { boundsOf, wingLocal } from '../src/data/geometry'
+import { boundsOf, w, wingLocal } from '../src/data/geometry'
 import { ucBankPolys, pgTreatmentPolys } from '../src/data/ground'
 import {
   CIRCULATION,
@@ -338,7 +338,7 @@ describe('external exits', () => {
   const exits = ground.filter((l) => l.icon === 'entrance' && l.id !== 'g-parking')
 
   it('draws every entrance and exit with a door', () => {
-    expect(exits.length).toBeGreaterThanOrEqual(4)
+    expect(exits.length).toBeGreaterThanOrEqual(3)
     for (const e of exits) {
       expect(e.doorMarks, `${e.id} has a drawn door`).toBeTruthy()
       expect(e.doorMarks!.length).toBeGreaterThan(0)
@@ -581,5 +581,106 @@ describe('the upper floors', () => {
     expect(CIRCULATION.filter((c) => c.floor !== 'ground').length).toBeGreaterThan(0)
     expect(secondaryOnFloor('first').length).toBeGreaterThan(0)
     expect(secondaryOnFloor('second').length).toBeGreaterThan(0)
+  })
+})
+
+/* ------------------------------------------------------------------ */
+/* The college's marked-up references                                  */
+/* ------------------------------------------------------------------ */
+
+describe('the routes the college marked up', () => {
+  const banks = boundsOf(ucBankPolys)
+  const main = circulationOnFloor('ground').find((c) => c.id === 'g-circ-main')!
+  const south = circulationOnFloor('ground').find((c) => c.id === 'g-circ-south')!
+  const pts = (id: string) => buildJourney(byId(id))!.legs[0].route.points
+  const usesCorridor = (points: Pt[], area: typeof main) =>
+    points.some((p) => area.polys.some((poly) => pointInPolygon(p, poly)))
+
+  it.each(['g-canteen', 'g-students-common', 'g-staff-common', 'g-lift-34'])(
+    'walks to %s around the bottom of the clinic',
+    (id) => {
+      const points = pts(id)
+      expect(usesCorridor(points, south), 'uses the student / staff circulation').toBe(true)
+      // Never cuts across the front of the chair banks to get there.
+      const alongTheBanks = points.filter(
+        (p) => main.polys.some((poly) => pointInPolygon(p, poly)) && p[0] > banks.x,
+      )
+      expect(alongTheBanks).toEqual([])
+    },
+  )
+
+  it('walks north up the western side to the postgraduate clinic', () => {
+    const points = pts('g-pg-clinic')
+    expect(usesCorridor(points, main), 'stays out of the clinic corridor').toBe(false)
+    expect(usesCorridor(points, south), 'stays out of the south circulation').toBe(false)
+    // It ends up north of the whole south wing.
+    expect(Math.min(...points.map((p) => p[1]))).toBeLessThan(banks.y - 400)
+  })
+
+  it('reaches Stair 02 up from the student circulation', () => {
+    const points = pts('g-stair-02')
+    expect(usesCorridor(points, south)).toBe(true)
+    const last = points[points.length - 1]
+    const before = points[points.length - 2]
+    // The final step goes north, out of the corridor and into the stair.
+    expect(last[1]).toBeLessThan(before[1])
+    expect(Math.abs(last[0] - before[0])).toBeLessThan(2)
+  })
+
+  it('puts the Head of Clinic Office where the reference marks it', () => {
+    // The marker solves to wing (a 285, b 60); the office spans a
+    // 259.5 - 316.5 in the top band, so the mark falls inside it.
+    const hoc = byId('g-pg-hoc')
+    const box = boundsOf(hoc.shape.polys)
+    const marked = w(284.6, 59.7)
+    expect(pointInPolygon(marked, hoc.shape.polys[0]), 'marker inside the office').toBe(true)
+    expect(box.w).toBeGreaterThan(0)
+  })
+})
+
+describe('doors are cut in the right walls', () => {
+  const areas = circulationOnFloor('ground').flatMap((c) => c.polys)
+  /**
+   * Enclosed rooms only. The patient lobby and the mixed common room
+   * are open floor — the plan draws circulation right through them —
+   * so a door may legitimately open into one.
+   */
+  const isOpenFloor = (polys: Pt[][]) => {
+    const b = boundsOf(polys)
+    return areas.some((a) => pointInPolygon([b.x + b.w / 2, b.y + b.h / 2], a))
+  }
+  const allRooms = [
+    ...ground.filter((l) => l.id !== 'g-parking').map((l) => ({ id: l.id, polys: l.shape.polys })),
+    ...secondaryOnFloor('ground').map((sp) => ({ id: sp.id, polys: sp.shape.polys })),
+  ].filter((r) => !isOpenFloor(r.polys))
+
+  it('never opens a door inside a different room', () => {
+    // This is what caught the postgraduate west exit: it and its
+    // approach corridor both fell inside the Dental Laboratory.
+    const wrong: string[] = []
+    for (const l of ground) {
+      for (const d of l.doorMarks ?? []) {
+        for (const room of allRooms) {
+          if (room.id === l.id) continue
+          if (room.polys.some((p) => pointInPolygon(d, p))) {
+            wrong.push(`${l.id} door at ${d.map(Math.round).join(',')} is inside ${room.id}`)
+          }
+        }
+      }
+    }
+    expect(wrong).toEqual([])
+  })
+
+  it('puts every exit marker on the outside of the plan', () => {
+    const wrong: string[] = []
+    for (const e of ground.filter((l) => l.icon === 'entrance' && l.id !== 'g-parking')) {
+      for (const room of allRooms) {
+        if (room.id === e.id) continue
+        if (room.polys.some((p) => pointInPolygon(e.label, p))) {
+          wrong.push(`${e.id} label is inside ${room.id}`)
+        }
+      }
+    }
+    expect(wrong).toEqual([])
   })
 })
