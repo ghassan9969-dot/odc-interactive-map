@@ -236,9 +236,9 @@ describe('the east lift and stair core', () => {
     const stair = boundsOf(byId('g-stair-03').shape.polys)
     expect(Math.abs(lifts.x - stair.x)).toBeLessThan(2)
     expect(Math.abs(lifts.w - stair.w)).toBeLessThan(2)
-    expect(lifts.y + lifts.h).toBeLessThan(stair.y)
-    // No large void between them: the landing is part of the core.
-    expect(stair.y - (lifts.y + lifts.h)).toBeLessThan(60)
+    // They share a wall: the college confirmed there is no landing.
+    expect(lifts.y + lifts.h).toBeLessThanOrEqual(stair.y)
+    expect(stair.y - (lifts.y + lifts.h)).toBeLessThan(2)
   })
 
   it('gives Stair 03 a door on its bottom side', () => {
@@ -247,20 +247,42 @@ describe('the east lift and stair core', () => {
     expect(stair.doorMarks![0][1]).toBeCloseTo(box.y + box.h, 3)
   })
 
-  it('joins the locker and prayer rooms to the core through the left-side entrance', () => {
+  it('enters the LCR from the corridor freed above the lifts', () => {
     const core = boundsOf(byId('g-lift-34').shape.polys)
-    const lockers = boundsOf(byId('g-lockers-f').shape.polys)
+    const lcr = boundsOf(byId('g-lcr').shape.polys)
     const connector = boundsOf(
-      circulationOnFloor('ground').find((c) => c.id === 'g-circ-e-women')!.polys,
+      circulationOnFloor('ground').find((c) => c.id === 'g-circ-e-lcr')!.polys,
     )
-    expect(connector.x).toBeLessThanOrEqual(lockers.x + lockers.w + 1)
-    expect(connector.x + connector.w).toBeGreaterThanOrEqual(core.x - 1)
+    // It reaches the locker block on one side and the core on the other,
+    // and sits above the lifts rather than beside them.
+    expect(connector.x).toBeLessThanOrEqual(lcr.x + lcr.w + 1)
+    expect(connector.x + connector.w).toBeGreaterThanOrEqual(core.x + core.w - 1)
+    expect(connector.y + connector.h).toBeLessThanOrEqual(core.y + 1)
+    // The LCR opens onto it.
+    expect(byId('g-lcr').door[1]).toBeGreaterThanOrEqual(connector.y)
+    expect(byId('g-lcr').door[1]).toBeLessThanOrEqual(connector.y + connector.h)
   })
 
-  it('keeps the prayer and locker rooms searchable', () => {
-    for (const id of ['g-lockers-f', 'g-lockers-m', 'g-prayer-e-f', 'g-prayer-e-m']) {
+  it('draws the lockers as one room rather than split by gender', () => {
+    const lcr = byId('g-lcr')
+    expect(lcr.shortName).toBe('LCR')
+    expect(lcr.shape.polys).toHaveLength(1)
+    // Nothing gendered is left in the locker block.
+    expect(ground.filter((l) => /lockers/i.test(l.name)).map((l) => l.id)).toEqual(['g-lcr'])
+  })
+
+  it('keeps the prayer room and the LCR searchable', () => {
+    for (const id of ['g-lcr', 'g-prayer-e-m']) {
       expect(byId(id).id).toBe(id)
     }
+  })
+
+  it("runs the men's toilets east until they meet the stair", () => {
+    const toilets = boundsOf(
+      secondaryOnFloor('ground').find((sp) => sp.id === 'g-s-toilet-e-m')!.shape.polys,
+    )
+    const stair = boundsOf(byId('g-stair-03').shape.polys)
+    expect(toilets.x + toilets.w).toBeCloseTo(stair.x, 3)
   })
 })
 
@@ -544,10 +566,10 @@ describe('technical and back-of-house spaces', () => {
   it('keeps the visitor-relevant support spaces visible', () => {
     // Toilets stay on the map, quietly, rather than disappearing.
     const toilets = secondaryOnFloor('ground').filter((s) => s.kind === 'toilet')
-    expect(toilets.length).toBeGreaterThanOrEqual(6)
+    expect(toilets.length).toBeGreaterThanOrEqual(5)
     for (const t of toilets) expect(t.label, `${t.id} is labelled`).toBeTruthy()
     // And these are full destinations.
-    for (const id of ['g-cssd', 'g-uc-nurse-1', 'g-prayer-w-f', 'g-prayer-w-m']) {
+    for (const id of ['g-cssd', 'g-uc-nurse-1', 'g-prayer-w-f', 'g-prayer-w-m', 'g-lcr']) {
       expect(byId(id).id).toBe(id)
     }
   })
