@@ -176,8 +176,16 @@ export const groundCirculation: CirculationArea[] = [
   },
 
   /* --- Patient lobby --------------------------------------------- */
-  { id: 'g-circ-lobby', floor: F, polys: [rect(g, 188, 945, 442, 1215)] },
-  { id: 'g-circ-westcore', floor: F, polys: [rect(g, 300, 1215, 374, 1432)] },
+  {
+    id: 'g-circ-lobby',
+    floor: F,
+    // The lower band stops short of the reception desk, leaving the
+    // aisle between the lobby and the desk open.
+    polys: [rect(g, 188, 945, 442, 1120), rect(g, 188, 1120, 374, 1215)],
+  },
+  // Open floor between the west rooms and the lift core. The security
+  // room that stood here has gone; the whole zone is circulation.
+  { id: 'g-circ-westcore', floor: F, polys: [rect(g, 300, 1215, 402, 1432)] },
   // The corridor in front of the west prayer rooms and toilets, which
   // also gives Stair 01's bottom door floor to open onto.
   { id: 'g-circ-west-s', floor: F, polys: [rect(g, 190, 1424, 492, 1436)] },
@@ -218,12 +226,11 @@ export const groundCirculation: CirculationArea[] = [
   {
     id: 'g-circ-uc-w',
     floor: F,
-    polys: [
-      rect(g, 430, UC_TOP, 456, UC_BOTTOM),
-      rect(g, 492, UC_TOP, 510, UC_BOTTOM),
-      rect(g, 456, 1252, 492, 1294),
-    ],
+    polys: [rect(g, 492, UC_TOP, 510, UC_BOTTOM)],
   },
+  // Between the reception desk and the lift core: the visitors' way
+  // into the Undergraduate Clinic.
+  { id: 'g-circ-uc-gate', floor: F, polys: [rect(g, 374, 1206, 510, 1242), rect(g, 374, 1120, 430, 1242)] },
   { id: 'g-circ-uc-e', floor: F, polys: [rect(g, 1415, UC_TOP, 1435, 1490)] },
 
   /* --- East core, lockers and student amenities ------------------ */
@@ -359,11 +366,11 @@ export const groundLocations: Location[] = [
     icon: 'reception',
     // A slim upright desk, with the aisle open on both sides so the
     // clinic entrance behind it is never blocked.
-    shape: { polys: [rect(g, 456, 1128, 492, 1252)] },
-    label: g(474, 1190),
+    shape: { polys: [rect(g, 430, 1120, 492, 1206)] },
+    label: g(461, 1163),
     labelSize: 12,
-    door: g(456, 1150),
-    doorMarks: [g(456, 1150), g(492, 1150)],
+    door: g(461, 1118),
+    doorMarks: [g(461, 1120), g(461, 1206)],
     entryNode: 'mc_uc',
     keywords: ['undergraduate clinic reception', 'check in', 'registration', 'clinic desk'],
     primary: true,
@@ -384,22 +391,6 @@ export const groundLocations: Location[] = [
     entryNode: 'pg_2',
     keywords: ['postgraduate clinic reception', 'check in'],
     primary: true,
-  },
-  {
-    id: 'g-security',
-    name: 'Security Room',
-    shortName: 'Security',
-    floor: F,
-    category: 'administration',
-    description: 'Building security office, off the corridor behind the patient lobby.',
-    icon: 'office',
-    shape: { polys: [rect(g, 310, 1278, 370, 1392)] },
-    label: g(340, 1335),
-    labelSize: 12,
-    door: g(308, 1335),
-    entryNode: 'west_am',
-    keywords: ['security', 'guard', 'lost property'],
-    primary: false,
   },
 
   /* --- Clinical -------------------------------------------------- */
@@ -561,8 +552,9 @@ export const groundLocations: Location[] = [
     // the aisles between the banks stay readable.
     label: g(776, 1101),
     labelSize: 26,
-    door: g(456, 1150),
-    entryNode: 'mc_uc',
+    door: g(508, 1224),
+    doorMarks: [g(508, 1224)],
+    entryNode: 'uc_gate',
     keywords: ['undergraduate', 'student clinic', 'dental chairs', 'treatment', 'cabinets'],
     primary: true,
     restricted: UC_RESTRICTED,
@@ -575,10 +567,10 @@ export const groundLocations: Location[] = [
     category: 'clinical',
     description: 'Nursing station beside Stair 01, facing the Undergraduate Clinic.',
     icon: 'doctor',
-    shape: { polys: [rect(g, 456, 1290, 490, 1400)] },
-    label: g(473, 1345),
+    shape: { polys: [rect(g, 458, 1242, 492, 1394)] },
+    label: g(475, 1318),
     labelSize: 14,
-    door: g(492, 1345),
+    door: g(494, 1345),
     entryNode: 'uc_e_s',
     keywords: ['nurse', 'nursing', 'station', 'ns1'],
     primary: false,
@@ -709,10 +701,10 @@ export const groundLocations: Location[] = [
     icon: 'waiting',
     // One large open lobby, as drawn: the small rectangle previously
     // shown here was only a fraction of the real waiting area.
-    shape: { polys: [rect(g, 196, 990, 386, 1208)] },
-    label: g(291, 1086),
+    shape: { polys: [rect(g, 208, 986, 326, 1212)] },
+    label: g(267, 1099),
     labelSize: 17,
-    door: g(291, 1210),
+    door: g(267, 1214),
     entryNode: 'lob_a',
     keywords: ['waiting room', 'seats', 'lobby', '48 seats', 'patient lobby'],
     primary: true,
@@ -766,10 +758,10 @@ export const groundLocations: Location[] = [
     category: 'circulation',
     description: 'Passenger lifts to the First and Second Floors, beside the patient lobby.',
     icon: 'lift',
-    shape: { polys: [rect(g, 374, 1216, 430, 1294)], dividers: [[g(374, 1255), g(430, 1255)]] },
-    label: g(402, 1255),
+    shape: { polys: [rect(g, 402, 1242, 458, 1312)], dividers: [[g(402, 1277), g(458, 1277)]] },
+    label: g(430, 1277),
     labelSize: 11,
-    door: g(432, 1255),
+    door: g(400, 1277),
     entryNode: 'core_w1',
     keywords: ['elevator', 'lift', 'l1', 'l2', 'upstairs', 'first floor', 'second floor'],
     primary: false,
@@ -782,12 +774,12 @@ export const groundLocations: Location[] = [
     category: 'circulation',
     description: 'Main staircase to the First and Second Floors, beside the patient lobby.',
     icon: 'stairs',
-    shape: { polys: [rect(g, 374, 1294, 430, 1394)] },
-    label: g(402, 1344),
+    shape: { polys: [rect(g, 402, 1312, 458, 1394)] },
+    label: g(430, 1353),
     labelSize: 15,
     // The bottom door, onto the strip that runs to the south circulation.
-    door: g(402, 1396),
-    doorMarks: [g(402, 1394)],
+    door: g(430, 1396),
+    doorMarks: [g(430, 1394)],
     entryNode: 'stair01_s',
     keywords: ['stairs', 'staircase', 'steps'],
     primary: false,
@@ -1081,7 +1073,7 @@ export const groundLocations: Location[] = [
       'Shaded visitor and staff car park behind the college, reached through the Student / Staff Entrance.',
     icon: 'entrance',
     shape: { polys: [rect(g, 1950, 1130, 2170, 1380)] },
-    label: g(2060, 1160),
+    label: g(2060, 1184),
     labelSize: 13,
     door: g(1990, 1382),
     entryNode: 'park_in',
@@ -1268,15 +1260,16 @@ export const groundNodes: Record<string, Pt> = {
 
   /* West core and amenities */
   core_w0: g(337, 1160),
-  core_w1: g(337, 1255),
+  core_w1: g(337, 1277),
   core_w2: g(337, 1340),
   west_am: g(302, 1340),
   west_s_mid: g(337, 1430),
-  stair01_s: g(402, 1430),
+  stair01_s: g(430, 1430),
   west_s_1: g(273, 1430),
   west_s_2: g(372, 1430),
-  mc_uw: g(443, 1100),
-  uc_w_a: g(443, 1160),
+  mc_uw: g(402, 1100),
+  uc_w_a: g(402, 1163),
+  uc_gate: g(402, 1224),
   mc_ue: g(501, 1100),
   uc_e_n: g(501, 1160),
   uc_e_s: g(501, 1345),
@@ -1396,6 +1389,7 @@ export const groundEdges: [string, string][] = [
   ['uc_e_n', 'uc_e_s'],
   ['mc_w', 'mc_uw'],
   ['mc_uw', 'uc_w_a'],
+  ['uc_w_a', 'uc_gate'],
 
   /* Student / staff circulation, around the bottom of the clinic */
   ['sc_w', 'sc_a0'],

@@ -60,9 +60,15 @@ describe('the patient entrance area', () => {
   it('draws the waiting area as the whole patient lobby', () => {
     const box = boundsOf(byId('g-patient-waiting').shape.polys)
     // The old rectangle was 86 x 116 units; the real lobby is far larger.
-    expect(box.w).toBeGreaterThan(180)
+    expect(box.w).toBeGreaterThan(110)
     expect(box.h).toBeGreaterThan(200)
-    expect(box.w * box.h).toBeGreaterThan(40000)
+    expect(box.w * box.h).toBeGreaterThan(25000)
+    // And it stops clear of the reception desk that now stands between
+    // it and the lift core.
+    const uc = boundsOf(byId('g-uc-reception').shape.polys)
+    expect(box.x + box.w).toBeLessThanOrEqual(uc.x)
+    // Its west edge stands clear of the entrance approach.
+    expect(box.x).toBeGreaterThan(byId('g-entrance-patient').door[0])
     expect(byId('g-patient-waiting').category).toBe('circulation')
   })
 
@@ -96,7 +102,8 @@ describe('the patient entrance area', () => {
     expect(lifts.x).toBeCloseTo(stair.x, 3)
     expect(lifts.w).toBeCloseTo(stair.w, 3)
     expect(lifts.y + lifts.h).toBeCloseTo(stair.y, 3)
-    expect(ns1.x).toBeGreaterThan(stair.x + stair.w)
+    // They share a wall on the real plan: no corridor runs between them.
+    expect(ns1.x).toBeGreaterThanOrEqual(stair.x + stair.w)
     expect(ns1.w).toBeLessThan(stair.w)
   })
 })

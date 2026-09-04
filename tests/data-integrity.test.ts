@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { FLOORS, FLOOR_BY_ID } from '../src/data/floors'
 import { GRAPHS, LOCATIONS, SECONDARY, CIRCULATION, secondOpenShell } from '../src/data/locations'
-import { buildRoute } from '../src/data/routes'
+import { buildRoute , routeTarget } from '../src/data/routes'
 import type { FloorId } from '../src/data/types'
 
 const FLOOR_IDS: FloorId[] = ['ground', 'first', 'second']
@@ -169,7 +169,8 @@ describe('single-floor routes', () => {
       const route = buildRoute(l)!
       const origin = FLOOR_BY_ID[l.floor].routeOrigin.point
       expect(Math.hypot(route.start[0] - origin[0], route.start[1] - origin[1])).toBeLessThan(1)
-      expect(Math.hypot(route.end[0] - l.door[0], route.end[1] - l.door[1])).toBeLessThan(1)
+      const end = routeTarget(l)
+      expect(Math.hypot(route.end[0] - end.door[0], route.end[1] - end.door[1])).toBeLessThan(1)
     }
   })
 })
