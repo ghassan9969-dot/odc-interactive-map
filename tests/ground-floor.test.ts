@@ -684,3 +684,68 @@ describe('doors are cut in the right walls', () => {
     expect(wrong).toEqual([])
   })
 })
+
+describe('the postgraduate wing exits', () => {
+  const lab = secondaryOnFloor('ground').find((s) => s.id === 'g-s-lab')!
+  const enclosed = [
+    ...lab.shape.polys.map((p) => ({ id: 'g-s-lab', poly: p })),
+    ...pgTreatmentPolys.map((p, i) => ({ id: `pg treatment ${i}`, poly: p })),
+    ...ucBankPolys.map((p, i) => ({ id: `uc bank ${i}`, poly: p })),
+  ]
+
+  it('has an exit at each end of the wing', () => {
+    for (const id of ['g-exit-pg-west', 'g-exit-pg-east']) {
+      const e = byId(id)
+      expect(e.doorMarks!.length).toBeGreaterThan(0)
+      expect(buildJourney(e), `${id} is reachable`).not.toBeNull()
+    }
+  })
+
+  it('opens the west exit on the north wall, clear of the laboratory', () => {
+    const e = byId('g-exit-pg-west')
+    const labBox = boundsOf(lab.shape.polys)
+    for (const p of [...e.shape.polys[0], ...e.doorMarks!, e.door]) {
+      expect(
+        enclosed.some((r) => pointInPolygon(p, r.poly)),
+        `${p.map(Math.round).join(',')} must not be inside an enclosed room`,
+      ).toBe(false)
+    }
+    // Immediately east of the laboratory, at the head of the top row.
+    expect(boundsOf(e.shape.polys).x).toBeGreaterThan(labBox.x + labBox.w - 20)
+  })
+
+  it('never walks either exit route through the laboratory or a treatment room', () => {
+    const trespass: string[] = []
+    for (const id of ['g-exit-pg-west', 'g-exit-pg-east']) {
+      const points = buildJourney(byId(id))!.legs[0].route.points
+      for (let i = 1; i < points.length; i++) {
+        const [ax, ay] = points[i - 1]
+        const [bx, by] = points[i]
+        const steps = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / 4))
+        for (let t = 0; t <= steps; t++) {
+          const q: Pt = [ax + ((bx - ax) * t) / steps, ay + ((by - ay) * t) / steps]
+          for (const room of enclosed) {
+            if (pointInPolygon(q, room.poly)) {
+              trespass.push(`${id} crosses ${room.id} at ${q.map(Math.round).join(',')}`)
+            }
+          }
+        }
+      }
+    }
+    expect([...new Set(trespass)]).toEqual([])
+  })
+
+  it('keeps the laboratory clear of the wing it sits beside', () => {
+    // The traced east wall used to overshoot into the first treatment
+    // room, which is why there was no bay for the exit to open into.
+    const overlap: string[] = []
+    for (const [i, room] of pgTreatmentPolys.entries()) {
+      for (const corner of room) {
+        if (lab.shape.polys.some((p) => pointInPolygon(corner, p))) {
+          overlap.push(`treatment room ${i} corner inside the laboratory`)
+        }
+      }
+    }
+    expect([...new Set(overlap)]).toEqual([])
+  })
+})

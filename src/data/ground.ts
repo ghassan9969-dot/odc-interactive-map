@@ -123,7 +123,18 @@ const HOC_A = PG_ROWS[0].a[2]
 /** The short unfitted run between the last treatment room and the toilets. */
 const PG_TAIL = { a0: 777.5, a1: 826 }
 
-const pgUnit = (a: number, row: PgRow): Pt[] => wRect(a - PG_HALF, row.b0, a + PG_HALF, row.b1)
+/** West edge of the exit lobby at the head of the top row. */
+const PG_EXIT = { a0: 150, a1: 172 }
+
+/**
+ * One treatment space. The first space of the top row is cut back to
+ * its east half, because the exit lobby beside the laboratory takes
+ * the rest of that bay.
+ */
+const pgUnit = (a: number, row: PgRow): Pt[] => {
+  const west = row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF
+  return wRect(west, row.b0, a + PG_HALF, row.b1)
+}
 
 /** All 40 postgraduate spaces, less the one given over to the office. */
 export const pgTreatmentPolys: Pt[][] = PG_ROWS.flatMap((row, i) =>
@@ -146,6 +157,10 @@ export const groundCirculation: CirculationArea[] = [
   { id: 'g-circ-wing-n', floor: F, polys: [wRect(135, 74, 975, 118)] },
   { id: 'g-circ-wing-s', floor: F, polys: [wRect(135, 247, 975, 291)] },
   { id: 'g-circ-wing-cross', floor: F, polys: [wRect(874, 12, 896, 351)] },
+  // The way out to the north wall, in the first bay clear of the
+  // laboratory. It runs a little past the corridor edge so the two
+  // overlap rather than meeting on a line.
+  { id: 'g-circ-wing-exit', floor: F, polys: [wRect(PG_EXIT.a0, 0, PG_EXIT.a1, 80)] },
 
   /* --- Postgraduate lobby, between the laboratory and the imaging
          column. The drawing labels this whole area "Circulation
@@ -276,6 +291,24 @@ export const groundLocations: Location[] = [
     entryNode: 'ent_staff',
     keywords: ['staff entrance', 'student entrance', 'south'],
     primary: true,
+  },
+  {
+    id: 'g-exit-pg-west',
+    name: 'Postgraduate Clinic Exit (West)',
+    shortName: 'PG Exit West',
+    floor: F,
+    category: 'reception',
+    description:
+      'External exit on the north wall of the Postgraduate Clinic wing, at the western end of the top row beside the laboratory.',
+    icon: 'entrance',
+    shape: { polys: [wRect(153, 0, 169, 12)] },
+    label: w(161, 44),
+    labelSize: 12,
+    door: w(161, 14),
+    doorMarks: [w(161, 6)],
+    entryNode: 'wing_w_exit',
+    keywords: ['exit', 'fire exit', 'way out', 'west', 'north'],
+    primary: false,
   },
   {
     id: 'g-exit-pg-east',
@@ -1100,13 +1133,15 @@ export const groundSecondary: SecondarySpace[] = [
     floor: F,
     kind: 'service',
     shape: {
-      polys: [poly(g, [[190, 528], [334, 471], [334, 836], [190, 836]])],
+      // Its east wall stops clear of the wing, which the traced
+      // outline overshot by enough to clip the first treatment room.
+      polys: [poly(g, [[190, 528], [326, 474], [326, 836], [190, 836]])],
       dividers: [
-        [g(190, 578), g(334, 578)],
-        [g(190, 636), g(334, 636)],
-        [g(190, 694), g(334, 694)],
-        [g(190, 750), g(334, 750)],
-        [g(190, 800), g(334, 800)],
+        [g(190, 578), g(326, 578)],
+        [g(190, 636), g(326, 636)],
+        [g(190, 694), g(326, 694)],
+        [g(190, 750), g(326, 750)],
+        [g(190, 800), g(326, 800)],
         [g(262, 578), g(262, 802)],
       ],
     },
@@ -1277,6 +1312,8 @@ export const groundNodes: Record<string, Pt> = {
   park_in: g(1500, 1520),
 
   /* Angled wing corridors */
+  wing_w_exit: w(161, 44),
+  wing_n_0: w(161, 96),
   wing_n_1: w(200, 96),
   wing_n_2: w(288, 96),
   wing_n_3: w(400, 96),
@@ -1323,7 +1360,9 @@ export const groundEdges: [string, string][] = [
   ['pg_wn_out', 'wing_w_n'],
   ['pg_5', 'pg_ws_out'],
   ['pg_ws_out', 'wing_w_s'],
-  ['wing_w_n', 'wing_n_1'],
+  ['wing_w_n', 'wing_n_0'],
+  ['wing_n_0', 'wing_w_exit'],
+  ['wing_n_0', 'wing_n_1'],
   ['wing_w_s', 'wing_s_1'],
   ['pg_1', 'mc_w'],
 

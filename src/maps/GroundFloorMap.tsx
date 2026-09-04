@@ -117,8 +117,9 @@ export function GroundFloorDecor({ layer }: { layer: 'under' | 'over' }) {
       <CarPark />
       <EntranceMarker at={g(184, 1142)} facing="west" />
       <EntranceMarker at={g(1501, 1492)} facing="south" />
-      {/* The wing's one external exit, at the head of the cross
-          corridor beside the toilets. */}
+      {/* The wing's two external exits: one at the head of the top
+          row beside the laboratory, one by the toilets at the far end. */}
+      <EntranceMarker at={w(161, 2)} facing="north" />
       <EntranceMarker at={w(885, 2)} facing="north" />
       {def.youAreHere && <YouAreHere at={def.youAreHere.point} />}
       <NorthArrow x={g(1560, 660)[0]} y={g(1560, 660)[1]} angle={def.northAngle} />
