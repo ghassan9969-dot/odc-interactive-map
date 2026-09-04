@@ -9,7 +9,7 @@
  */
 
 import type { CirculationArea, Location, SecondarySpace, Pt } from './types'
-import { f1, rect } from './geometry'
+import { f1, poly, rect } from './geometry'
 
 const F = 'first' as const
 
@@ -45,27 +45,35 @@ export const firstCirculation: CirculationArea[] = [
   {
     id: 'f-circ-main',
     floor: F,
-    polys: [rect(f1, 336, 1348, 1953, 1396)],
+    polys: [rect(f1, 336, 1348, 1701, 1396)],
     label: 'Main Corridor',
     labelAt: f1(900, 1374),
   },
   {
     id: 'f-circ-north',
     floor: F,
-    polys: [rect(f1, 336, NORTH, 1953, 1022)],
+    polys: [rect(f1, 336, NORTH, 1701, 1022)],
     label: 'North Corridor',
     labelAt: f1(900, 998),
   },
   { id: 'f-circ-v1', floor: F, polys: [rect(f1, 338, NORTH, 412, BOT)] },
   { id: 'f-circ-v2', floor: F, polys: [rect(f1, 556, NORTH, 614, BOT)] },
   { id: 'f-circ-v4', floor: F, polys: [rect(f1, 1102, NORTH, 1130, BOT)] },
+  // The strips either side of the lecture rooms are the students'
+  // lobby now, not a room.
+  {
+    id: 'f-circ-lobby',
+    floor: F,
+    polys: [rect(f1, 1132, TOP, 1176, BOT), rect(f1, 1462, TOP, 1512, BOT)],
+    label: 'Student Lobby',
+    labelAt: f1(1154, 1160),
+  },
   { id: 'f-circ-v5', floor: F, polys: [rect(f1, 1514, NORTH, 1527, BOT)] },
   { id: 'f-circ-v6', floor: F, polys: [rect(f1, 1673, NORTH, 1699, BOT)] },
   // Reaches 1586 so it meets f-circ-e2 rather than leaving a two-unit
   // gap the east-core routes had to jump. Found by the corridor tests.
   { id: 'f-circ-e1', floor: F, polys: [rect(f1, 1527, 1124, 1586, 1162)] },
   { id: 'f-circ-e2', floor: F, polys: [rect(f1, 1586, 1094, 1604, 1272)] },
-  { id: 'f-circ-sim', floor: F, polys: [rect(f1, 1699, 1244, 1953, 1284)] },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -238,44 +246,71 @@ export const firstLocations: Location[] = [
     primary: true,
   },
   {
-    id: 'f-student-lounge',
-    name: 'Student Lounge',
-    shortName: 'Student Lounge',
+    id: 'f-lecture-2',
+    name: 'Lecture Room 2',
+    shortName: 'Lecture Room 2',
     floor: F,
     category: 'learning',
-    description: 'Informal seating for students between lectures.',
-    icon: 'lounge',
-    shape: {
-      polys: [rect(f1, 1132, TOP, 1176, 1348), rect(f1, 1462, TOP, 1512, 1348)],
-    },
-    label: f1(1154, 1160),
+    description: 'Tiered lecture room for whole-cohort teaching.',
+    icon: 'lecture',
+    shape: { polys: [rect(f1, 1178, TOP, 1316, 1178)] },
+    label: f1(1247, 1090),
     labelSize: 17,
-    door: f1(1154, 1352),
-    entryNode: 'sc_1154',
-    keywords: ['lounge', 'seating', 'break', 'social'],
+    door: f1(1247, 1018),
+    doorMarks: [f1(1247, TOP)],
+    entryNode: 'nc_1247',
+    keywords: ['lecture', 'theatre', 'teaching', 'room 2'],
     primary: true,
   },
   {
-    id: 'f-lecture-rooms',
-    name: 'Lecture Rooms',
-    shortName: 'Lecture Rooms',
+    id: 'f-lecture-4',
+    name: 'Lecture Room 4',
+    shortName: 'Lecture Room 4',
     floor: F,
     category: 'learning',
-    description: 'Four tiered lecture theatres used for large teaching sessions and examinations.',
+    description: 'Tiered lecture room for whole-cohort teaching.',
     icon: 'lecture',
-    shape: {
-      polys: [
-        rect(f1, 1178, TOP, 1316, 1178),
-        rect(f1, 1320, TOP, 1459, 1178),
-        rect(f1, 1178, 1182, 1316, 1348),
-        rect(f1, 1320, 1182, 1459, 1348),
-      ],
-    },
-    label: f1(1318, 1160),
-    labelSize: 28,
+    shape: { polys: [rect(f1, 1320, TOP, 1459, 1178)] },
+    label: f1(1390, 1090),
+    labelSize: 17,
+    door: f1(1390, 1018),
+    doorMarks: [f1(1390, TOP)],
+    entryNode: 'nc_1390',
+    keywords: ['lecture', 'theatre', 'teaching', 'room 4'],
+    primary: true,
+  },
+  {
+    id: 'f-lecture-1',
+    name: 'Lecture Room 1',
+    shortName: 'Lecture Room 1',
+    floor: F,
+    category: 'learning',
+    description: 'Tiered lecture room for whole-cohort teaching.',
+    icon: 'lecture',
+    shape: { polys: [rect(f1, 1178, 1182, 1316, BOT)] },
+    label: f1(1247, 1268),
+    labelSize: 17,
     door: f1(1247, 1352),
+    doorMarks: [f1(1247, BOT)],
     entryNode: 'sc_1247',
-    keywords: ['lecture', 'theatre', 'lecture hall', 'exam', 'examination', 'exam hall', 'auditorium'],
+    keywords: ['lecture', 'theatre', 'teaching', 'room 1'],
+    primary: true,
+  },
+  {
+    id: 'f-lecture-3',
+    name: 'Lecture Room 3',
+    shortName: 'Lecture Room 3',
+    floor: F,
+    category: 'learning',
+    description: 'Tiered lecture room for whole-cohort teaching.',
+    icon: 'lecture',
+    shape: { polys: [rect(f1, 1320, 1182, 1459, BOT)] },
+    label: f1(1390, 1268),
+    labelSize: 17,
+    door: f1(1390, 1352),
+    doorMarks: [f1(1390, BOT)],
+    entryNode: 'sc_1400',
+    keywords: ['lecture', 'theatre', 'teaching', 'room 3'],
     primary: true,
   },
   {
@@ -286,8 +321,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Training suite where students practise radiography and sterilisation.',
     icon: 'xray',
-    shape: { polys: [rect(f1, 1566, TOP, 1671, 1090)] },
-    label: f1(1618, 1032),
+    shape: { polys: [rect(f1, 1529, TOP, 1671, 1090)] },
+    doorMarks: [f1(1643, TOP)],
+    label: f1(1600, 1032),
     labelSize: 16,
     door: f1(1564, 1032),
     entryNode: 'v5_c',
@@ -303,6 +339,7 @@ export const firstLocations: Location[] = [
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
     shape: { polys: [rect(f1, 1529, 1276, 1671, BOT)] },
+    doorMarks: [f1(1548, BOT)],
     label: f1(1600, 1313),
     labelSize: 19,
     door: f1(1600, 1352),
@@ -312,24 +349,37 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-simulation',
-    name: 'Simulation Room',
-    shortName: 'Simulation Room',
+    name: 'CSL',
+    shortName: 'CSL',
     floor: F,
     category: 'learning',
-    description: 'Ninety-six simulation units where students practise before treating patients.',
+    description:
+      'Clinical Simulation Laboratory - ninety-six simulation units where students practise before treating patients.',
     icon: 'simulation',
+    // Runs all the way down to the prosthodontic lab. Only the strip
+    // above the plaster room stops short, at that room's north wall.
     shape: {
-      polys: [rect(f1, 1701, TOP, 1953, 1240)],
+      polys: [
+        poly(f1, [
+          [1701, NORTH],
+          [1953, NORTH],
+          [1953, 1244],
+          [1889, 1244],
+          [1889, 1286],
+          [1701, 1286],
+        ]),
+      ],
       dividers: [
         ...dividersX(1701, TOP, 1953, 1240, 5),
         ...dividersY(1701, TOP, 1953, 1240, 4),
       ],
     },
     label: f1(1827, 1105),
-    labelSize: 26,
-    door: f1(1827, 1242),
-    entryNode: 'sim_s',
-    keywords: ['simulation', 'phantom head', 'practice', 'skills lab'],
+    labelSize: 34,
+    doorMarks: [f1(1701, 1005), f1(1701, 1208)],
+    door: f1(1701, 1208),
+    entryNode: 'v6_c',
+    keywords: ['csl', 'simulation room', 'phantom head', 'practice', 'skills lab'],
     primary: true,
   },
   {
@@ -341,13 +391,14 @@ export const firstLocations: Location[] = [
     description: 'Laboratory of thirty-six benches for making crowns, bridges and dentures.',
     icon: 'lab',
     shape: {
-      polys: [rect(f1, 1776, 1286, 1885, BOT)],
-      dividers: dividersX(1776, 1286, 1885, BOT, 3),
+      polys: [rect(f1, 1701, 1286, 1885, 1386)],
+      dividers: dividersX(1701, 1286, 1885, 1386, 4),
     },
-    label: f1(1830, 1318),
+    doorMarks: [f1(1862, 1286), f1(1701, 1361)],
+    label: f1(1793, 1330),
     labelSize: 17,
-    door: f1(1830, 1352),
-    entryNode: 'sc_1830',
+    door: f1(1701, 1361),
+    entryNode: 'sc_1686',
     keywords: ['prosthodontics', 'dentures', 'crowns', 'technician', 'lab'],
     primary: true,
   },
@@ -410,10 +461,10 @@ export const firstLocations: Location[] = [
     description: 'Passenger lifts at the east end of the building.',
     icon: 'lift',
     shape: {
-      polys: [rect(f1, 1606, 1094, 1644, 1160)],
-      dividers: [[f1(1606, 1127), f1(1644, 1127)]],
+      polys: [rect(f1, 1606, 1094, 1671, 1160)],
+      dividers: [[f1(1606, 1127), f1(1671, 1127)]],
     },
-    label: f1(1625, 1127),
+    label: f1(1638, 1127),
     labelSize: 10,
     door: f1(1604, 1127),
     entryNode: 'east_lobby_n',
@@ -429,6 +480,7 @@ export const firstLocations: Location[] = [
     description: 'Staircase at the east end of the building.',
     icon: 'stairs',
     shape: { polys: [rect(f1, 1606, 1176, 1660, 1272)] },
+    doorMarks: [f1(1660, 1258)],
     label: f1(1633, 1224),
     labelSize: 16,
     door: f1(1604, 1224),
@@ -483,29 +535,14 @@ export const firstSecondary: SecondarySpace[] = [
     labelSize: 11,
   },
   {
-    id: 'f-s-xray-rooms',
-    name: 'X-Ray',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(f1, 1529, TOP, 1562, 1090)], dividers: dividersY(1529, TOP, 1562, 1090, 3) },
-    label: f1(1545, 1032),
-    labelSize: 11,
-  },
-  {
     id: 'f-s-toilets-e1',
-    name: 'Toilets',
+    name: 'Toilets F',
     floor: F,
     kind: 'toilet',
-    shape: { polys: [rect(f1, 1529, 1094, 1584, 1122)] },
-  },
-  {
-    id: 'f-s-toilets-e2',
-    name: 'Toilets',
-    floor: F,
-    kind: 'toilet',
-    shape: { polys: [rect(f1, 1529, 1166, 1584, 1220)] },
-    label: f1(1556, 1193),
-    labelSize: 11,
+    shape: { polys: [rect(f1, 1529, 1094, 1584, 1160)] },
+    doorMarks: [f1(1529, 1127)],
+    labelSize: 12,
+    label: f1(1556, 1127),
   },
   {
     id: 'f-s-tech-e',
@@ -515,21 +552,13 @@ export const firstSecondary: SecondarySpace[] = [
     shape: { polys: [rect(f1, 1529, 1224, 1599, 1272)] },
   },
   {
-    id: 'f-s-store-e',
-    name: 'Store',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(f1, 1710, 1288, 1772, BOT)] },
-    label: f1(1741, 1319),
-    labelSize: 12,
-  },
-  {
     id: 'f-s-plaster',
     name: 'Plaster Room',
     floor: F,
     kind: 'service',
-    shape: { polys: [rect(f1, 1889, 1286, 1953, BOT)] },
-    label: f1(1921, 1318),
+    shape: { polys: [rect(f1, 1889, 1244, 1953, 1386)] },
+    doorMarks: [f1(1921, 1244)],
+    label: f1(1921, 1315),
     labelSize: 12,
   },
 ]
@@ -539,11 +568,11 @@ export const firstSecondary: SecondarySpace[] = [
 /* ------------------------------------------------------------------ */
 
 /** Where the north corridor meets each vertical, plus the hub's door. */
-const ncXs = [375, 585, 978, 1116, 1520, 1686]
+const ncXs = [375, 585, 978, 1116, 1247, 1390, 1520, 1686]
 
 const scXs = [
   375, 484, 585, 689, 790, 886, 978, 1026, 1116, 1154, 1247, 1400, 1487, 1520, 1600,
-  1686, 1760, 1830, 1920, 839,
+  1686, 839,
 ]
 
 export const firstNodes: Record<string, Pt> = {
@@ -566,8 +595,7 @@ export const firstNodes: Record<string, Pt> = {
   east_lobby_n: f1(1595, 1127),
   east_lobby_s: f1(1595, 1224),
   east_cross: f1(1556, 1143),
-  sim_s: f1(1827, 1264),
-  sim_w: f1(1720, 1264),
+  v6_c: f1(1686, 1208),
 }
 
 const chain = (ids: string[]): [string, string][] =>
@@ -597,7 +625,6 @@ export const firstEdges: [string, string][] = [
   ['east_cross', 'east_lobby_n'],
   ['east_lobby_n', 'east_lobby_s'],
   ['sc_1686', 'v6_a'],
-  ['v6_a', 'v6_b'],
-  ['v6_a', 'sim_w'],
-  ['sim_w', 'sim_s'],
+  ['v6_a', 'v6_c'],
+  ['v6_c', 'v6_b'],
 ]
