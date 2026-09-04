@@ -566,11 +566,19 @@ describe('technical and back-of-house spaces', () => {
   it('keeps the visitor-relevant support spaces visible', () => {
     // Toilets stay on the map, quietly, rather than disappearing.
     const toilets = secondaryOnFloor('ground').filter((s) => s.kind === 'toilet')
-    expect(toilets.length).toBeGreaterThanOrEqual(5)
+    // Fewer stand alone now: the west pair were taken into the prayer
+    // rooms beside them, which is where visitors are sent for both.
+    expect(toilets.length).toBeGreaterThanOrEqual(3)
     for (const t of toilets) expect(t.label, `${t.id} is labelled`).toBeTruthy()
     // And these are full destinations.
     for (const id of ['g-cssd', 'g-uc-nurse-1', 'g-prayer-w-f', 'g-prayer-w-m', 'g-lcr']) {
       expect(byId(id).id).toBe(id)
+    }
+    // The west prayer rooms carry their own toilets, so the card has to
+    // say so rather than leaving a visitor hunting for a separate room.
+    for (const id of ['g-prayer-w-f', 'g-prayer-w-m']) {
+      expect(byId(id).description, id).toMatch(/toilet/i)
+      expect(byId(id).shape.polys, id).toHaveLength(1)
     }
   })
 })
