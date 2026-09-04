@@ -82,12 +82,29 @@ export interface Location {
   labelSize?: number
   /** Door / arrival point where a route terminates, in SVG coordinates. */
   door: Pt
+  /**
+   * Doorways drawn on the map. Set for entrances, exits and the
+   * internal doors that matter for finding your way; left off where a
+   * door mark would only add noise.
+   */
+  doorMarks?: Pt[]
   /** Corridor graph node the door connects to. */
   entryNode: string
   /** Extra search terms. */
   keywords?: string[]
   /** Listed in the "Important destinations" panel. */
   primary: boolean
+  /**
+   * A controlled clinical area. Visitors are routed to the check-in
+   * desk named by `routeVia` instead of into the room itself, and the
+   * card carries the warning below.
+   */
+  restricted?: {
+    title: string
+    message: string
+    /** Id of the Location a visitor must be sent to instead. */
+    routeVia: string
+  }
 }
 
 /** Secondary rooms: drawn, labelled faintly, never listed or navigable. */
@@ -98,6 +115,8 @@ export interface SecondarySpace {
   shape: MapShape
   label?: Pt
   labelSize?: number
+  /** Important internal door openings, kept subtle on support rooms. */
+  doorMarks?: Pt[]
   /** Kind of support space; drives the (very subtle) tint. */
   kind: 'service' | 'toilet' | 'core'
 }

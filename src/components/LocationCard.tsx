@@ -1,4 +1,4 @@
-import { Info, Navigation } from 'lucide-react'
+import { Info, Lock, Navigation } from 'lucide-react'
 import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
 import type { Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
@@ -30,6 +30,16 @@ export function LocationCard({ location, routeShown, floorHint, onRoute }: Props
       </div>
 
       <p className="card__body">{location.description}</p>
+
+      {location.restricted && (
+        <div className="card__restricted">
+          <Lock size={16} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: 2 }} />
+          <div>
+            <strong>{location.restricted.title}</strong>
+            <span>{location.restricted.message}</span>
+          </div>
+        </div>
+      )}
 
       {floorHint && (
         <p className="card__note">

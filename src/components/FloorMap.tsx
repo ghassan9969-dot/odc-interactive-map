@@ -290,6 +290,23 @@ export function FloorMap({
               })}
             </g>
 
+            {/* --- doorways --------------------------------------- */}
+            {/* Entrances, exits and the internal doors that matter
+                for finding your way. Drawn over the rooms so a door
+                always reads against the wall it sits in. */}
+            <g pointerEvents="none">
+              {locations.flatMap((loc) =>
+                (loc.doorMarks ?? []).map((d, i) => (
+                  <circle key={`${loc.id}-d${i}`} cx={d[0]} cy={d[1]} r={7} className="map__door" />
+                )),
+              )}
+              {secondary.flatMap((space) =>
+                (space.doorMarks ?? []).map((d, i) => (
+                  <circle key={`${space.id}-d${i}`} cx={d[0]} cy={d[1]} r={6} className="map__door" />
+                )),
+              )}
+            </g>
+
             {/* --- navigation route ------------------------------- */}
             {route && (
               <g pointerEvents="none">

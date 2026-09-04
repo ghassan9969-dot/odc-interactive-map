@@ -310,9 +310,22 @@ function makeRoute(target: Location, destLabel: string): Route | null {
   }
 }
 
+/**
+ * Where a walk may actually end.
+ *
+ * A restricted clinical area is never entered: the visitor is taken to
+ * the check-in desk named by the restriction, and the card explains
+ * what has to happen there before anyone goes any further.
+ */
+export function routeTarget(target: Location): Location {
+  if (!target.restricted) return target
+  return LOCATIONS.find((l) => l.id === target.restricted!.routeVia) ?? target
+}
+
 /** Single-floor walk to a destination, from that floor's own origin. */
 export function buildRoute(target: Location): Route | null {
-  return makeRoute(target, target.name)
+  const end = routeTarget(target)
+  return makeRoute(end, end.name)
 }
 
 /**
@@ -322,9 +335,10 @@ export function buildRoute(target: Location): Route | null {
  * to the L1 & L2 lifts, then walk from the lift lobby to the room.
  */
 export function buildJourney(target: Location): Journey | null {
-  if (target.floor === 'ground') {
+  const end = routeTarget(target)
+  if (end.floor === 'ground') {
     const route = buildRoute(target)
-    return route ? { target, legs: [{ floor: 'ground', route, title: target.name }] } : null
+    return route ? { target, legs: [{ floor: 'ground', route, title: end.name }] } : null
   }
 
   const lifts = LOCATIONS.find((l) => l.id === LIFT_ID)

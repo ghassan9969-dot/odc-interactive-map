@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { FLOOR_BY_ID } from '../src/data/floors'
 import { LOCATIONS } from '../src/data/locations'
-import { buildJourney } from '../src/data/routes'
+import { buildJourney, routeTarget } from '../src/data/routes'
 import type { Location } from '../src/data/types'
 
 const byId = (id: string): Location => {
@@ -60,11 +60,14 @@ describe('journeys from the kiosk', () => {
     for (const l of LOCATIONS) {
       const journey = buildJourney(l)!
       const last = journey.legs[journey.legs.length - 1]
+      // A restricted area is walked to only as far as its check-in desk,
+      // so the endpoint is that desk's door rather than the room's.
+      const end = routeTarget(l)
       expect(journey.target.id).toBe(l.id)
-      expect(last.floor, `${l.id} final leg floor`).toBe(l.floor)
-      expect(last.title).toBe(l.name)
+      expect(last.floor, `${l.id} final leg floor`).toBe(end.floor)
+      expect(last.title).toBe(end.name)
       expect(
-        Math.hypot(last.route.end[0] - l.door[0], last.route.end[1] - l.door[1]),
+        Math.hypot(last.route.end[0] - end.door[0], last.route.end[1] - end.door[1]),
         `${l.id} final leg endpoint`,
       ).toBeLessThan(1)
     }

@@ -7,6 +7,13 @@
  *    surgeries, CSSD)
  *  - a long horizontal wing along the south (Undergraduate Clinic,
  *    patient lobby, student amenities, canteen)
+ *
+ * Room positions come from the drawing's own text and cabinet tags:
+ * every treatment space is marked `CABINETES 4X4` in the postgraduate
+ * wing and `CABINETES 3X3` in the undergraduate clinic, which fixes the
+ * bank spacing exactly. Where the college has confirmed a real-world
+ * correction that contradicts the sheet, the correction wins and is
+ * noted at the point it applies.
  */
 
 import type { CirculationArea, Location, SecondarySpace, Pt } from './types'
@@ -17,13 +24,6 @@ const F = 'ground' as const
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-
-/** Evenly spaced dividers across an angled wing band. */
-const wingDividers = (a0: number, a1: number, b0: number, b1: number, step = 57): [Pt, Pt][] => {
-  const out: [Pt, Pt][] = []
-  for (let a = a0 + step; a < a1 - 6; a += step) out.push([w(a, b0), w(a, b1)])
-  return out
-}
 
 /** Grid of faint dividers inside an orthogonal block. */
 const gridDividers = (
@@ -46,81 +46,235 @@ const gridDividers = (
   return out
 }
 
-/** The seven undergraduate clinic pods along the south wing. */
-const UC_PODS: [number, number][] = [
-  [507, 593],
-  [620, 706],
-  [733, 819],
-  [846, 932],
-  [1085, 1171],
-  [1198, 1284],
-  [1311, 1397],
+/* ---- Undergraduate clinic ------------------------------------------
+ * The `CABINETES 3X3` tags sit in columns at drawing x = 532, 575 |
+ * 646, 688 | 759, 801 | 872, 915 | 986 | 1090 | 1164, 1206 | 1277,
+ * 1320 | 1393. Reading the gaps (43 inside a pair, ~71 between banks,
+ * 104 across the core) gives the arrangement the college confirmed:
+ * four paired banks, a single, the Stair 02 / Nurse Station core,
+ * a single, two paired banks, and a final single beside the lockers.
+ */
+interface Bank {
+  x0: number
+  x1: number
+  cols: 1 | 2
+}
+
+const UC_BANKS: Bank[] = [
+  { x0: 510, x1: 596, cols: 2 },
+  { x0: 624, x1: 710, cols: 2 },
+  { x0: 737, x1: 823, cols: 2 },
+  { x0: 850, x1: 936, cols: 2 },
+  { x0: 964, x1: 1008, cols: 1 },
+  /* central core: Stair 02, Nurse Station and services */
+  { x0: 1068, x1: 1112, cols: 1 },
+  { x0: 1142, x1: 1228, cols: 2 },
+  { x0: 1255, x1: 1341, cols: 2 },
+  { x0: 1371, x1: 1415, cols: 1 },
 ]
+
+/** The core the two middle singles sit either side of. */
+const UC_CORE = { x0: 1008, x1: 1068 }
 const UC_TOP = 1123
 const UC_BOTTOM = 1432
+/** Seven rows of chairs, from the `3X3` tag rows in the drawing. */
+const UC_ROWS = 7
+
+/** Every bank as a polygon, used for drawing and for the access tests. */
+export const ucBankPolys: Pt[][] = UC_BANKS.map((b) => rect(g, b.x0, UC_TOP, b.x1, UC_BOTTOM))
+
+/**
+ * The open aisles between neighbouring banks.
+ *
+ * Banks 4 and 5 are the two singles that flank the Stair 02 core, so
+ * the space between them is the core itself and not an aisle.
+ */
+const UC_AISLES = UC_BANKS.slice(0, -1)
+  .map((bank, i) => ({ i, x0: bank.x1, x1: UC_BANKS[i + 1].x0 }))
+  .filter(({ x0 }) => x0 !== UC_CORE.x0)
+
+/* ---- Postgraduate wing ---------------------------------------------
+ * Projecting the 40 `CABINETES 4X4` tags into the wing's own frame
+ * gives four bands of 11 / 10 / 10 / 9 treatment spaces at a pitch of
+ * 57 units, with the PG Waiting Area filling the middle of bands two
+ * and three and the CBCT room filling the middle of band four.
+ */
+const PG_HALF = 28.5
+
+interface PgRow {
+  b0: number
+  b1: number
+  a: number[]
+}
+
+const PG_ROWS: PgRow[] = [
+  // Eleven spaces along the top row. The third from the west carries no
+  // cabinet tag on the sheet — it is the Head of Clinic Office, and the
+  // college's marked-up reference puts the office exactly there.
+  { b0: 12, b1: 74, a: [175, 232, 288, 345, 402, 458, 519, 579, 636, 692, 749] },
+  { b0: 118, b1: 178, a: [175, 231, 288, 345, 401, 579, 636, 692, 749, 805] },
+  { b0: 187, b1: 247, a: [174, 231, 288, 344, 401, 579, 635, 692, 749, 805] },
+  { b0: 291, b1: 351, a: [174, 231, 344, 401, 579, 635, 692, 748, 805] },
+]
+
+/** The Head of Clinic Office: third space from the western end, top row. */
+const HOC_A = PG_ROWS[0].a[2]
+
+/** The short unfitted run between the last treatment room and the toilets. */
+const PG_TAIL = { a0: 777.5, a1: 826 }
+
+/** West edge of the exit lobby at the head of the top row. */
+const PG_EXIT = { a0: 150, a1: 172 }
+
+/**
+ * One treatment space. The first space of the top row is cut back to
+ * its east half, because the exit lobby beside the laboratory takes
+ * the rest of that bay.
+ */
+const pgUnit = (a: number, row: PgRow): Pt[] => {
+  const west = row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF
+  return wRect(west, row.b0, a + PG_HALF, row.b1)
+}
+
+/** All 40 postgraduate spaces, less the one given over to the office. */
+export const pgTreatmentPolys: Pt[][] = PG_ROWS.flatMap((row, i) =>
+  row.a.filter((a) => !(i === 0 && a === HOC_A)).map((a) => pgUnit(a, row)),
+)
+
+/** Faint lines between the treatment spaces in one band. */
+const pgRowDividers = (row: PgRow): [Pt, Pt][] =>
+  row.a
+    .slice(1)
+    .filter((a, i) => a - row.a[i] < 70)
+    .map((a): [Pt, Pt] => [w(a - PG_HALF, row.b0), w(a - PG_HALF, row.b1)])
 
 /* ------------------------------------------------------------------ */
 /* Circulation — drawn first, as the pale "floor" of the plan          */
 /* ------------------------------------------------------------------ */
 
 export const groundCirculation: CirculationArea[] = [
-  // The wing corridors run a little past the wing's west wall so they
-  // meet the postgraduate circulation without a sliver of dead ground.
+  /* --- Postgraduate wing ---------------------------------------- */
   { id: 'g-circ-wing-n', floor: F, polys: [wRect(135, 74, 975, 118)] },
   { id: 'g-circ-wing-s', floor: F, polys: [wRect(135, 247, 975, 291)] },
   { id: 'g-circ-wing-cross', floor: F, polys: [wRect(874, 12, 896, 351)] },
+  // The way out to the north wall, in the first bay clear of the
+  // laboratory. It runs a little past the corridor edge so the two
+  // overlap rather than meeting on a line.
+  { id: 'g-circ-wing-exit', floor: F, polys: [wRect(PG_EXIT.a0, 0, PG_EXIT.a1, 80)] },
+
+  /* --- Postgraduate lobby, between the laboratory and the imaging
+         column. The drawing labels this whole area "Circulation
+         Postgraduat Clinic", with the PC Reception desk standing in
+         it, so it is walkable floor rather than a corridor.
+         Its north-east edge runs a little way into the wing so it
+         overlaps the two corridor mouths instead of meeting them on a
+         line, which would leave a seam a route could fall through. */
   {
     id: 'g-circ-pg',
     floor: F,
-    polys: [poly(g, [[333, 500], [452, 808], [752, 768], [752, 1078], [333, 1078]])],
+    polys: [poly(g, [[334, 512], [448, 803], [442, 806], [442, 1078], [334, 1078]])],
   },
+
+  /* --- Patient lobby --------------------------------------------- */
   {
     id: 'g-circ-lobby',
     floor: F,
-    polys: [rect(g, 188, 945, 388, 1215)],
+    // The lower band stops short of the reception desk, leaving the
+    // aisle between the lobby and the desk open.
+    polys: [rect(g, 188, 945, 442, 1120), rect(g, 188, 1120, 374, 1215)],
   },
-  { id: 'g-circ-westcore', floor: F, polys: [rect(g, 300, 1215, 392, 1400)] },
+  // The passage between the coffee shop and the PC Reception desk.
+  { id: 'g-circ-pc', floor: F, polys: [rect(g, 302, 902, 330, 960)] },
+  // Open floor between the west rooms and the lift core. The security
+  // room that stood here has gone; the whole zone is circulation.
+  { id: 'g-circ-westcore', floor: F, polys: [rect(g, 300, 1215, 402, 1432)] },
+  // The corridor in front of the west prayer rooms and toilets, which
+  // also gives Stair 01's bottom door floor to open onto.
+  { id: 'g-circ-west-s', floor: F, polys: [rect(g, 190, 1424, 492, 1436)] },
+  // The photocopy station shown on the sheet has gone; the space it
+  // stood in is now open floor in front of the west amenity rooms.
+  { id: 'g-circ-west-amenity', floor: F, polys: [rect(g, 300, 1215, 374, 1424)] },
+
+  /* --- Imaging and sterile services column ----------------------- */
+  { id: 'g-circ-cbct', floor: F, polys: [rect(g, 522, 840, 538, 1078)] },
+  { id: 'g-circ-cssd', floor: F, polys: [rect(g, 636, 785, 653, 1078)] },
+  // The narrow corridor the two OPG rooms face each other across.
+  { id: 'g-circ-opg', floor: F, polys: [rect(g, 442, 910, 538, 938)] },
+
+  /* --- Undergraduate clinic -------------------------------------- */
   {
     id: 'g-circ-main',
     floor: F,
-    polys: [rect(g, 388, 1078, 1410, 1123)],
+    polys: [rect(g, 388, 1078, 1435, 1123)],
     label: 'Main Clinic Corridor',
-    labelAt: g(900, 1101),
+    labelAt: g(1230, 1101),
   },
   {
     id: 'g-circ-south',
     floor: F,
-    polys: [rect(g, 492, 1432, 1410, 1490)],
+    polys: [rect(g, 380, 1432, 1435, 1490)],
     label: 'Student / Staff Circulation',
-    labelAt: g(900, 1462),
+    labelAt: g(760, 1462),
   },
-  ...UC_PODS.slice(0, -1).map((pod, i) => ({
-    id: `g-circ-pod-${i}`,
+  // Open aisles between the banks. Banks 4 and 5 have the core between
+  // them rather than an aisle, so that gap is deliberately skipped.
+  ...UC_AISLES.map(({ i, x0, x1 }) => ({
+    id: `g-circ-uc-${i}`,
     floor: F,
-    polys: [rect(g, pod[1], UC_TOP, UC_PODS[i + 1][0], UC_BOTTOM)],
+    polys: [rect(g, x0, UC_TOP, x1, UC_BOTTOM)],
   })),
-  { id: 'g-circ-uc-w', floor: F, polys: [rect(g, 492, UC_TOP, 507, UC_BOTTOM)] },
-  { id: 'g-circ-uc-e', floor: F, polys: [rect(g, 1397, UC_TOP, 1412, 1490)] },
+  // Either side of the UC Reception desk, so the way into the clinic is
+  // open on both flanks and never blocked by the desk.
+  {
+    id: 'g-circ-uc-w',
+    floor: F,
+    polys: [rect(g, 492, UC_TOP, 510, UC_BOTTOM)],
+  },
+  // Between the reception desk and the lift core: the visitors' way
+  // into the Undergraduate Clinic.
+  { id: 'g-circ-uc-gate', floor: F, polys: [rect(g, 374, 1206, 510, 1242), rect(g, 374, 1120, 430, 1242)] },
+  { id: 'g-circ-uc-e', floor: F, polys: [rect(g, 1415, UC_TOP, 1435, 1490)] },
+
+  /* --- East core, lockers and student amenities ------------------ */
+  // The corridor freed above the lowered lifts: the way into the LCR
+  // and the staff common room.
+  { id: 'g-circ-e-lcr', floor: F, polys: [rect(g, 1568, 1188, 1694, 1240)] },
   {
     id: 'g-circ-ss-lobby',
     floor: F,
-    polys: [rect(g, 1412, 1420, 1904, 1490), rect(g, 1640, 1394, 1904, 1420)],
+    polys: [rect(g, 1435, 1420, 1660, 1490), rect(g, 1568, 1400, 1660, 1420)],
     label: 'Student / Staff Lobby',
-    labelAt: g(1500, 1442),
+    labelAt: g(1500, 1455),
   },
-  { id: 'g-circ-e-core', floor: F, polys: [rect(g, 1548, 1178, 1575, 1425)] },
-  { id: 'g-circ-e-cross', floor: F, polys: [rect(g, 1548, 1178, 1694, 1196)] },
-  { id: 'g-circ-e-link', floor: F, polys: [rect(g, 1640, 1196, 1694, 1425)] },
-  { id: 'g-circ-cbct', floor: F, polys: [rect(g, 522, 840, 538, 1078)] },
-  { id: 'g-circ-cssd', floor: F, polys: [rect(g, 636, 785, 653, 1078)] },
+  { id: 'g-circ-e-cross', floor: F, polys: [rect(g, 1568, 1078, 1694, 1100)] },
+  { id: 'g-circ-e-link', floor: F, polys: [rect(g, 1640, 1100, 1694, 1400)] },
+  // The mixed common room is one large open student area; the walk to
+  // the female common room crosses it, exactly as the plan intends.
+  { id: 'g-circ-smcr', floor: F, polys: [rect(g, 1660, 1396, 1904, 1490)] },
+  // Outdoor approach to the east-side parking plot.
+  {
+    id: 'g-circ-parking-road',
+    floor: F,
+    polys: [
+      poly(g, [[1480, 1468], [1870, 1490], [1878, 1530], [1480, 1504]]),
+      poly(g, [[1842, 1488], [1878, 1528], [2015, 1395], [1970, 1368]]),
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
 /* Destinations                                                        */
 /* ------------------------------------------------------------------ */
 
+const UC_RESTRICTED = {
+  title: 'Restricted Clinical Area',
+  message:
+    'Please check in at UC Reception. Protective clothing and staff permission are required before entering.',
+  routeVia: 'g-uc-reception',
+} as const
+
 export const groundLocations: Location[] = [
-  /* --- Entrances ------------------------------------------------- */
+  /* --- Entrances and exits --------------------------------------- */
   {
     id: 'g-entrance-patient',
     name: 'Patient Entrance',
@@ -133,6 +287,7 @@ export const groundLocations: Location[] = [
     label: g(300, 1000),
     labelSize: 19,
     door: g(206, 1142),
+    doorMarks: [g(200, 1142)],
     entryNode: 'ent_patient',
     keywords: ['main entrance', 'visitors', 'front door', 'west', 'way in'],
     primary: true,
@@ -149,46 +304,67 @@ export const groundLocations: Location[] = [
     label: g(1501, 1556),
     labelSize: 18,
     door: g(1501, 1478),
+    doorMarks: [g(1501, 1490)],
     entryNode: 'ent_staff',
     keywords: ['staff entrance', 'student entrance', 'south'],
     primary: true,
   },
-
-  /* --- Reception & information ----------------------------------- */
   {
-    id: 'g-main-reception',
-    name: 'Main Reception',
-    shortName: 'Main Reception',
+    id: 'g-exit-pg-west',
+    name: 'Postgraduate Clinic Exit (West)',
+    shortName: 'PG Exit West',
     floor: F,
     category: 'reception',
     description:
-      'The first point of contact for visitor information and assistance. The desk is shared with building security.',
-    icon: 'reception',
-    shape: {
-      polys: [
-        poly(g, [[192, 1060], [280, 1060], [280, 1112], [248, 1112], [248, 1100], [192, 1100]]),
-      ],
-    },
-    label: g(236, 1086),
+      'External exit on the north wall of the Postgraduate Clinic wing, at the western end of the top row beside the laboratory.',
+    icon: 'entrance',
+    shape: { polys: [wRect(153, 0, 169, 12)] },
+    label: w(161, 44),
     labelSize: 12,
-    door: g(252, 1114),
-    entryNode: 'ent_patient',
-    keywords: ['information', 'help desk', 'security', 'front desk', 'enquiries', 'welcome'],
-    primary: true,
+    door: w(161, 14),
+    doorMarks: [w(161, 6)],
+    entryNode: 'wing_w_exit',
+    keywords: ['exit', 'fire exit', 'way out', 'west', 'north'],
+    primary: false,
   },
+  {
+    id: 'g-exit-pg-east',
+    name: 'Postgraduate Clinic Exit',
+    shortName: 'PG Exit',
+    floor: F,
+    category: 'reception',
+    description:
+      'External exit on the north side of the Postgraduate Clinic wing, beside the toilets at its eastern end.',
+    icon: 'entrance',
+    shape: { polys: [wRect(874, 0, 896, 12)] },
+    label: w(885, 38),
+    labelSize: 12,
+    door: w(885, 14),
+    doorMarks: [w(885, 6)],
+    entryNode: 'wing_ne_exit',
+    keywords: ['exit', 'fire exit', 'way out', 'east'],
+    primary: false,
+  },
+
+  /* --- Reception & information ----------------------------------- */
   {
     id: 'g-uc-reception',
     name: 'UC Reception',
     shortName: 'UC Reception',
     floor: F,
     category: 'reception',
-    description: 'Reception desk for the Undergraduate Clinic, where patients check in.',
+    description:
+      'Check-in desk for the Undergraduate Clinic. All clinic patients report here first.',
     icon: 'reception',
-    shape: { polys: [rect(g, 428, 1123, 490, 1190)] },
-    label: g(459, 1156),
-    door: g(459, 1121),
+    // A slim upright desk, with the aisle open on both sides so the
+    // clinic entrance behind it is never blocked.
+    shape: { polys: [rect(g, 430, 1120, 492, 1206)] },
+    label: g(461, 1163),
+    labelSize: 12,
+    door: g(461, 1118),
+    doorMarks: [g(461, 1120), g(461, 1206)],
     entryNode: 'mc_uc',
-    keywords: ['undergraduate clinic reception', 'check in', 'registration'],
+    keywords: ['undergraduate clinic reception', 'check in', 'registration', 'clinic desk'],
     primary: true,
   },
   {
@@ -197,11 +373,13 @@ export const groundLocations: Location[] = [
     shortName: 'PC Reception',
     floor: F,
     category: 'reception',
-    description: 'Reception desk for the Postgraduate Clinic.',
+    description: 'Check-in desk for the Postgraduate Clinic, beside the patient lobby.',
     icon: 'reception',
-    shape: { polys: [rect(g, 356, 920, 428, 992)] },
-    label: g(392, 956),
-    door: g(430, 956),
+    shape: { polys: [rect(g, 330, 916, 420, 982)] },
+    label: g(375, 949),
+    labelSize: 15,
+    door: g(422, 949),
+    doorMarks: [g(330, 949), g(420, 949)],
     entryNode: 'pg_2',
     keywords: ['postgraduate clinic reception', 'check in'],
     primary: true,
@@ -214,34 +392,38 @@ export const groundLocations: Location[] = [
     shortName: 'PG Clinic',
     floor: F,
     category: 'clinical',
-    description: 'Clinical treatment area for postgraduate dental services.',
+    description:
+      'Specialist treatment wing with 39 clinical treatment rooms, arranged in four rows around a central waiting area.',
     icon: 'clinic',
     shape: {
-      polys: [
-        wRect(147, 12, 820, 74),
-        wRect(147, 118, 462, 178),
-        wRect(533, 118, 820, 178),
-        wRect(147, 187, 462, 247),
-        wRect(533, 187, 820, 247),
-        wRect(203, 291, 448, 351),
-        wRect(558, 291, 820, 351),
-      ],
-      dividers: [
-        ...wingDividers(147, 820, 12, 74),
-        ...wingDividers(147, 462, 118, 178),
-        ...wingDividers(533, 820, 118, 178),
-        ...wingDividers(147, 462, 187, 247),
-        ...wingDividers(533, 820, 187, 247),
-        ...wingDividers(203, 448, 291, 351),
-        ...wingDividers(558, 820, 291, 351),
-      ],
+      polys: pgTreatmentPolys,
+      dividers: PG_ROWS.flatMap(pgRowDividers),
     },
-    label: w(310, 215),
-    labelSize: 32,
-    door: w(497, 76),
+    // Kept in the corridor band so it never sits over the room grid.
+    label: w(300, 269),
+    labelSize: 24,
+    door: w(497, 110),
     entryNode: 'wing_n_4',
     keywords: ['consultation rooms', 'postgraduate', 'specialist', 'pg clinic', 'dental'],
     primary: true,
+  },
+  {
+    id: 'g-pg-hoc',
+    name: 'Head of Clinic Office',
+    shortName: 'HOC',
+    floor: F,
+    category: 'administration',
+    description:
+      'Office of the Head of the Postgraduate Clinic, third along the north row of the wing.',
+    icon: 'office',
+    shape: { polys: [pgUnit(HOC_A, PG_ROWS[0])] },
+    label: w(HOC_A, 43),
+    labelSize: 15,
+    door: w(HOC_A, 76),
+    doorMarks: [w(HOC_A, 74)],
+    entryNode: 'wing_n_2',
+    keywords: ['head of clinic', 'hoc', 'office', 'director'],
+    primary: false,
   },
   {
     id: 'g-pg-waiting',
@@ -251,12 +433,96 @@ export const groundLocations: Location[] = [
     category: 'clinical',
     description: 'Seating for patients waiting to be seen in the Postgraduate Clinic.',
     icon: 'waiting',
-    shape: { polys: [wRect(462, 112, 533, 250)] },
-    label: w(497, 181),
-    labelSize: 19,
-    door: w(497, 110),
+    shape: { polys: [wRect(430, 112, 550, 250)] },
+    label: w(490, 181),
+    labelSize: 18,
+    door: w(490, 110),
     entryNode: 'wing_n_4',
     keywords: ['waiting', 'seating'],
+    primary: false,
+  },
+  {
+    id: 'g-pg-cbct',
+    name: 'CBCT (Postgraduate Clinic)',
+    shortName: 'CBCT',
+    floor: F,
+    category: 'clinical',
+    description:
+      'Cone beam CT room serving the Postgraduate Clinic, opening onto the south wing corridor.',
+    icon: 'scan',
+    // One room: the sheet's X-ray and processing pair is a single
+    // CBCT suite in the college's corrected layout.
+    shape: { polys: [wRect(430, 291, 550, 351)] },
+    label: w(490, 321),
+    labelSize: 20,
+    door: w(490, 289),
+    doorMarks: [w(490, 291)],
+    entryNode: 'wing_s_4',
+    keywords: ['cone beam', 'ct', 'scan', 'imaging', '3d', 'x-ray', 'radiography'],
+    primary: true,
+  },
+  {
+    id: 'g-pg-surgery-1',
+    name: 'Surgery Room 1',
+    shortName: 'Surgery 1',
+    floor: F,
+    category: 'clinical',
+    description: 'Surgery room at the eastern end of the Postgraduate Clinic wing.',
+    icon: 'surgery',
+    shape: { polys: [wRect(898, 12, 975, 118)] },
+    label: w(936, 65),
+    labelSize: 15,
+    door: w(896, 65),
+    entryNode: 'wing_x_n',
+    keywords: ['surgery', 'operating', 'minor surgery'],
+    primary: false,
+  },
+  {
+    id: 'g-pg-surgery-2',
+    name: 'Surgery Room 2',
+    shortName: 'Surgery 2',
+    floor: F,
+    category: 'clinical',
+    description: 'Second surgery room at the eastern end of the Postgraduate Clinic wing.',
+    icon: 'surgery',
+    shape: { polys: [wRect(898, 252, 975, 351)] },
+    label: w(936, 302),
+    labelSize: 15,
+    door: w(896, 302),
+    entryNode: 'wing_x_s',
+    keywords: ['surgery', 'operating', 'minor surgery'],
+    primary: false,
+  },
+  {
+    id: 'g-pg-meeting-1',
+    name: 'Meeting Room 1',
+    shortName: 'M1',
+    floor: F,
+    category: 'administration',
+    description: 'Meeting room at the eastern end of the Postgraduate Clinic wing.',
+    icon: 'meeting',
+    shape: { polys: [wRect(898, 126, 975, 192)] },
+    label: w(936, 159),
+    labelSize: 16,
+    door: w(896, 159),
+    entryNode: 'wing_x_m',
+    keywords: ['meeting', 'seminar', 'm1'],
+    primary: false,
+  },
+  {
+    id: 'g-pg-meeting-2',
+    name: 'Meeting Room 2',
+    shortName: 'M2',
+    floor: F,
+    category: 'administration',
+    description: 'Second meeting room at the eastern end of the Postgraduate Clinic wing.',
+    icon: 'meeting',
+    shape: { polys: [wRect(898, 196, 975, 248)] },
+    label: w(936, 222),
+    labelSize: 16,
+    door: w(896, 222),
+    entryNode: 'wing_x_m',
+    keywords: ['meeting', 'seminar', 'm2'],
     primary: false,
   },
   {
@@ -266,67 +532,131 @@ export const groundLocations: Location[] = [
     floor: F,
     category: 'clinical',
     description:
-      'The main clinical teaching and patient treatment area for undergraduate students.',
+      'The main clinical teaching and patient treatment area, with student chair banks either side of the central Stair 02 core.',
     icon: 'clinic',
     shape: {
-      polys: UC_PODS.map(([x0, x1]) => rect(g, x0, UC_TOP, x1, UC_BOTTOM)),
-      dividers: UC_PODS.flatMap(([x0, x1]) => gridDividers(x0, UC_TOP, x1, UC_BOTTOM, 2, 7)),
+      polys: ucBankPolys,
+      dividers: UC_BANKS.flatMap((b) =>
+        gridDividers(b.x0, UC_TOP, b.x1, UC_BOTTOM, b.cols, UC_ROWS),
+      ),
     },
-    label: g(776, 1270),
-    labelSize: 32,
-    door: g(776, 1121),
-    entryNode: 'mc_2b',
+    // Sits in the corridor band above the banks so the chair grid and
+    // the aisles between the banks stay readable.
+    label: g(776, 1101),
+    labelSize: 26,
+    door: g(508, 1224),
+    doorMarks: [g(508, 1224)],
+    entryNode: 'uc_gate',
     keywords: ['undergraduate', 'student clinic', 'dental chairs', 'treatment', 'cabinets'],
     primary: true,
+    restricted: UC_RESTRICTED,
+  },
+  {
+    id: 'g-uc-nurse-1',
+    name: 'Nurse Station 1',
+    shortName: 'NS1',
+    floor: F,
+    category: 'clinical',
+    description: 'Nursing station beside Stair 01, facing the Undergraduate Clinic.',
+    icon: 'doctor',
+    shape: { polys: [rect(g, 458, 1242, 492, 1394)] },
+    label: g(475, 1318),
+    labelSize: 14,
+    door: g(494, 1345),
+    entryNode: 'uc_e_s',
+    keywords: ['nurse', 'nursing', 'station', 'ns1'],
+    primary: false,
+  },
+  {
+    id: 'g-uc-nurse-2',
+    name: 'Nurse Station 2',
+    shortName: 'NS2',
+    floor: F,
+    category: 'clinical',
+    description: 'Nursing station in the centre of the Undergraduate Clinic, beside Stair 02.',
+    icon: 'doctor',
+    shape: { polys: [rect(g, UC_CORE.x0, UC_TOP, UC_CORE.x1, 1210)] },
+    label: g(1038, 1166),
+    labelSize: 13,
+    door: g(1038, 1121),
+    entryNode: 'mc_core',
+    keywords: ['nurse', 'nursing', 'station', 'ns2'],
+    primary: false,
   },
   {
     id: 'g-side-surgeries',
-    name: 'Side Surgeries & Recovery',
+    name: 'Side Surgeries',
     shortName: 'Side Surgeries',
     floor: F,
     category: 'clinical',
-    description: 'Side surgery rooms and recovery rooms serving both clinics.',
+    description: 'Side surgery rooms serving both clinics, off the imaging corridor.',
     icon: 'surgery',
     shape: {
       polys: [rect(g, 538, 840, 636, 1085)],
       dividers: gridDividers(538, 840, 636, 1085, 2, 5),
     },
     label: g(587, 962),
-    labelSize: 19,
+    labelSize: 18,
     door: g(536, 962),
     entryNode: 'cor_cbct_m',
-    keywords: ['surgery', 'recovery room', 'minor surgery'],
+    keywords: ['surgery', 'minor surgery', 'side surgery'],
     primary: false,
   },
   {
-    id: 'g-cbct',
-    name: 'CBCT',
-    shortName: 'CBCT',
+    id: 'g-opg-2',
+    name: 'OPG 2',
+    shortName: 'OPG 2',
     floor: F,
     category: 'clinical',
-    description: 'Cone beam CT scanning room for detailed three-dimensional dental imaging.',
-    icon: 'scan',
-    shape: { polys: [rect(g, 442, 840, 522, 886)] },
-    label: g(482, 863),
-    door: g(524, 863),
-    entryNode: 'cor_cbct_n',
-    keywords: ['cone beam', 'ct', 'scan', 'imaging', '3d'],
+    description:
+      'Panoramic dental X-ray room, on the north side of the short imaging corridor.',
+    icon: 'xray',
+    shape: { polys: [rect(g, 442, 840, 522, 910)] },
+    label: g(482, 875),
+    labelSize: 16,
+    // Faces OPG 1 across the corridor.
+    door: g(482, 912),
+    doorMarks: [g(482, 910)],
+    entryNode: 'opg_mid',
+    keywords: ['opg', 'panoramic', 'x-ray', 'radiography', 'orthopantomogram'],
     primary: true,
   },
   {
-    id: 'g-xray',
-    name: 'X-Ray',
-    shortName: 'X-Ray',
+    id: 'g-opg-1',
+    name: 'OPG 1',
+    shortName: 'OPG 1',
     floor: F,
     category: 'clinical',
-    description: 'Dental X-ray room with an adjoining processing room.',
+    description:
+      'Panoramic dental X-ray room, on the south side of the short imaging corridor.',
     icon: 'xray',
-    shape: { polys: [wRect(448, 291, 558, 351)], dividers: [[w(505, 291), w(505, 351)]] },
-    label: w(503, 321),
-    labelSize: 20,
-    door: w(503, 289),
-    entryNode: 'wing_s_4',
-    keywords: ['radiography', 'radiology', 'opg', 'imaging'],
+    shape: { polys: [rect(g, 442, 938, 522, 1006)] },
+    label: g(482, 972),
+    labelSize: 16,
+    // Faces OPG 2 across the corridor.
+    door: g(482, 936),
+    doorMarks: [g(482, 938)],
+    entryNode: 'opg_mid',
+    keywords: ['opg', 'panoramic', 'x-ray', 'radiography', 'orthopantomogram'],
+    primary: true,
+  },
+  {
+    id: 'g-recovery',
+    name: 'Recovery Room',
+    shortName: 'RR',
+    floor: F,
+    category: 'clinical',
+    description: 'Room where patients rest and are observed after treatment.',
+    icon: 'waiting',
+    shape: { polys: [rect(g, 442, 1006, 522, 1078)] },
+    label: g(482, 1042),
+    labelSize: 15,
+    // Two doors: one to the postgraduate lobby on the left, one to the
+    // imaging corridor on the right.
+    door: g(524, 1042),
+    doorMarks: [g(442, 1042), g(522, 1042)],
+    entryNode: 'cor_cbct_s',
+    keywords: ['recovery', 'rest', 'post treatment', 'rr'],
     primary: true,
   },
   {
@@ -357,22 +687,18 @@ export const groundLocations: Location[] = [
     name: 'Patient Waiting Area',
     shortName: 'Patient Waiting',
     floor: F,
-    category: 'clinical',
-    description: 'Comfortable seating for patients and visitors, next to the patient entrance.',
+    category: 'circulation',
+    description:
+      'The main patient lobby, with seating for 48 people between the Patient Entrance and the clinics.',
     icon: 'waiting',
-    shape: {
-      polys: [rect(g, 300, 1090, 386, 1206)],
-      dividers: [
-        [g(300, 1119), g(386, 1119)],
-        [g(300, 1148), g(386, 1148)],
-        [g(300, 1177), g(386, 1177)],
-      ],
-    },
-    label: g(343, 1128),
+    // One large open lobby, as drawn: the small rectangle previously
+    // shown here was only a fraction of the real waiting area.
+    shape: { polys: [rect(g, 208, 986, 326, 1212)] },
+    label: g(267, 1099),
     labelSize: 17,
-    door: g(298, 1148),
+    door: g(267, 1214),
     entryNode: 'lob_a',
-    keywords: ['waiting room', 'seats', 'lobby', '48 seats'],
+    keywords: ['waiting room', 'seats', 'lobby', '48 seats', 'patient lobby'],
     primary: true,
   },
 
@@ -385,8 +711,8 @@ export const groundLocations: Location[] = [
     category: 'food',
     description: 'A convenient place for visitors and students to enjoy refreshments.',
     icon: 'coffee',
-    shape: { polys: [rect(g, 192, 838, 332, 942)] },
-    label: g(262, 894),
+    shape: { polys: [rect(g, 192, 838, 302, 942)] },
+    label: g(247, 890),
     door: g(258, 944),
     entryNode: 'lob_n2',
     keywords: ['cafe', 'coffee', 'refreshments', 'drinks', 'snacks'],
@@ -401,14 +727,14 @@ export const groundLocations: Location[] = [
     description: 'Main dining hall serving hot meals for students and staff.',
     icon: 'restaurant',
     shape: {
-      polys: [rect(g, 1694, 1080, 1812, 1398)],
+      polys: [rect(g, 1694, 1100, 1790, 1390)],
       dividers: [
-        [g(1694, 1160), g(1812, 1160)],
-        [g(1694, 1240), g(1812, 1240)],
-        [g(1694, 1320), g(1812, 1320)],
+        [g(1694, 1180), g(1790, 1180)],
+        [g(1694, 1260), g(1790, 1260)],
+        [g(1694, 1330), g(1790, 1330)],
       ],
     },
-    label: g(1753, 1245),
+    label: g(1742, 1245),
     door: g(1692, 1300),
     entryNode: 'east_link_s',
     keywords: ['restaurant', 'food', 'dining', 'lunch', 'cafeteria'],
@@ -424,10 +750,10 @@ export const groundLocations: Location[] = [
     category: 'circulation',
     description: 'Passenger lifts to the First and Second Floors, beside the patient lobby.',
     icon: 'lift',
-    shape: { polys: [rect(g, 396, 1188, 442, 1268)], dividers: [[g(396, 1228), g(442, 1228)]] },
-    label: g(419, 1228),
+    shape: { polys: [rect(g, 402, 1242, 458, 1312)], dividers: [[g(402, 1277), g(458, 1277)]] },
+    label: g(430, 1277),
     labelSize: 11,
-    door: g(394, 1228),
+    door: g(400, 1277),
     entryNode: 'core_w1',
     keywords: ['elevator', 'lift', 'l1', 'l2', 'upstairs', 'first floor', 'second floor'],
     primary: false,
@@ -438,13 +764,15 @@ export const groundLocations: Location[] = [
     shortName: 'Stair 01',
     floor: F,
     category: 'circulation',
-    description: 'Main staircase to the First and Second Floors.',
+    description: 'Main staircase to the First and Second Floors, beside the patient lobby.',
     icon: 'stairs',
-    shape: { polys: [rect(g, 396, 1322, 452, 1394)] },
-    label: g(424, 1358),
+    shape: { polys: [rect(g, 402, 1312, 458, 1394)] },
+    label: g(430, 1353),
     labelSize: 15,
-    door: g(394, 1358),
-    entryNode: 'core_w2',
+    // The bottom door, onto the strip that runs to the south circulation.
+    door: g(430, 1396),
+    doorMarks: [g(430, 1394)],
+    entryNode: 'stair01_s',
     keywords: ['stairs', 'staircase', 'steps'],
     primary: false,
   },
@@ -454,13 +782,14 @@ export const groundLocations: Location[] = [
     shortName: 'Lifts L3 / L4',
     floor: F,
     category: 'circulation',
-    description: 'Passenger lifts near the student and staff entrance.',
+    description: 'Passenger lifts in the east core, above Stair 03.',
     icon: 'lift',
-    shape: { polys: [rect(g, 1575, 1196, 1622, 1268)], dividers: [[g(1575, 1232), g(1622, 1232)]] },
-    label: g(1598, 1232),
+    shape: { polys: [rect(g, 1568, 1240, 1636, 1318)], dividers: [[g(1568, 1279), g(1636, 1279)]] },
+    label: g(1602, 1279),
     labelSize: 11,
-    door: g(1573, 1232),
-    entryNode: 'lift34',
+    door: g(1602, 1238),
+    doorMarks: [g(1602, 1240)],
+    entryNode: 'e_core_n',
     keywords: ['elevator', 'lift', 'l3', 'l4'],
     primary: false,
   },
@@ -472,11 +801,11 @@ export const groundLocations: Location[] = [
     category: 'circulation',
     description: 'Staircase in the centre of the Undergraduate Clinic wing.',
     icon: 'stairs',
-    shape: { polys: [rect(g, 958, 1318, 1036, 1398)] },
-    label: g(997, 1358),
-    labelSize: 15,
-    door: g(956, 1358),
-    entryNode: 'mc_stair02',
+    shape: { polys: [rect(g, UC_CORE.x0, 1330, UC_CORE.x1, UC_BOTTOM)] },
+    label: g(1038, 1381),
+    labelSize: 14,
+    door: g(1038, 1434),
+    entryNode: 'sc_core',
     keywords: ['stairs', 'staircase'],
     primary: false,
   },
@@ -486,13 +815,15 @@ export const groundLocations: Location[] = [
     shortName: 'Stair 03',
     floor: F,
     category: 'circulation',
-    description: 'Staircase beside the student and staff entrance.',
+    description: 'Staircase in the east core, below the L3 and L4 lifts.',
     icon: 'stairs',
-    shape: { polys: [rect(g, 1575, 1320, 1630, 1392)] },
-    label: g(1602, 1356),
+    shape: { polys: [rect(g, 1568, 1318, 1636, 1400)] },
+    label: g(1602, 1359),
     labelSize: 15,
-    door: g(1573, 1356),
-    entryNode: 'e_core_m',
+    // Door on the bottom side, onto the student and staff lobby.
+    door: g(1602, 1402),
+    doorMarks: [g(1602, 1400)],
+    entryNode: 'e_stair_s',
     keywords: ['stairs', 'staircase'],
     primary: false,
   },
@@ -506,369 +837,320 @@ export const groundLocations: Location[] = [
     category: 'administration',
     description: 'Quiet common room for college staff, next to the canteen.',
     icon: 'lounge',
-    shape: { polys: [rect(g, 1612, 1080, 1690, 1176)] },
-    label: g(1651, 1128),
-    labelSize: 16,
-    door: g(1651, 1178),
-    entryNode: 'east_link_n',
+    shape: { polys: [rect(g, 1568, 1078, 1692, 1188)] },
+    label: g(1630, 1133),
+    labelSize: 13,
+    door: g(1630, 1190),
+    doorMarks: [g(1630, 1188)],
+    entryNode: 'staff_door',
     keywords: ['staff room', 'common room'],
     primary: false,
   },
   {
     id: 'g-students-common',
     name: 'Students Mixed Common Room',
-    shortName: 'Students Common Room',
+    shortName: 'SMCR',
     floor: F,
     category: 'learning',
-    description: 'Shared common room for students beside the student and staff entrance.',
+    description:
+      'The large shared student common room across the south-east of the building, opening onto the student and staff lobby.',
     icon: 'students',
-    shape: { polys: [rect(g, 1660, 1424, 1812, 1477)] },
-    label: g(1736, 1450),
-    labelSize: 16,
-    door: g(1736, 1422),
-    entryNode: 'ss_mid',
-    keywords: ['common room', 'students', 'lounge'],
-    primary: false,
+    // Extends the whole way across the lower area to the female
+    // students common room, as confirmed by the college.
+    shape: { polys: [rect(g, 1660, 1396, 1904, 1490)] },
+    label: g(1740, 1444),
+    labelSize: 20,
+    door: g(1658, 1444),
+    entryNode: 'ss_lobby_e',
+    keywords: ['common room', 'students', 'lounge', 'smcr', 'mixed'],
+    primary: true,
   },
   {
     id: 'g-female-common',
     name: 'Female Students Common Room',
-    shortName: 'Female Common Room',
+    shortName: 'FSCR',
     floor: F,
     category: 'learning',
-    description: 'Common room for female students at the east end of the building.',
+    description: 'Common room for female students, opening onto the mixed common room.',
     icon: 'students',
-    shape: { polys: [rect(g, 1816, 1300, 1900, 1392)] },
-    label: g(1858, 1346),
+    shape: { polys: [rect(g, 1816, 1300, 1904, 1392)] },
+    label: g(1860, 1346),
     labelSize: 16,
-    door: g(1858, 1394),
-    entryNode: 'ss_far',
-    keywords: ['common room', 'female students'],
+    // Door on the bottom side, opening toward the mixed common room.
+    door: g(1860, 1394),
+    doorMarks: [g(1860, 1392)],
+    entryNode: 'smcr_e',
+    keywords: ['common room', 'female students', 'fscr', 'ladies'],
+    primary: false,
+  },
+  {
+    id: 'g-sac',
+    name: 'Student Advisory Council',
+    shortName: 'SAC',
+    floor: F,
+    category: 'administration',
+    description: 'Office of the Student Advisory Council, off the student and staff lobby.',
+    icon: 'meeting',
+    shape: { polys: [rect(g, 1600, 1430, 1656, 1490)] },
+    label: g(1628, 1460),
+    labelSize: 14,
+    door: g(1598, 1460),
+    entryNode: 'ss_lobby_e',
+    keywords: ['student advisory council', 'sac', 'activity room', 'student council'],
     primary: false,
   },
   {
     id: 'g-kids-play',
-    name: 'Kids Play Area',
-    shortName: 'Kids Play Area',
+    name: 'Kids Play Room',
+    shortName: 'Kids Play Room',
     floor: F,
     category: 'clinical',
-    description: 'A small supervised play space for children in the patient lobby.',
+    description: 'A supervised play room for children, off the patient lobby.',
     icon: 'play',
-    shape: { polys: [rect(g, 190, 1218, 296, 1272)] },
-    label: g(243, 1245),
-    labelSize: 15,
-    door: g(298, 1245),
+    shape: { polys: [rect(g, 190, 1218, 300, 1314)] },
+    label: g(245, 1266),
+    labelSize: 14,
+    door: g(302, 1266),
     entryNode: 'core_w0',
-    keywords: ['children', 'play', 'kids'],
+    keywords: ['children', 'play', 'kids', 'play room'],
     primary: false,
+  },
+  {
+    id: 'g-call-centre',
+    name: 'Call Centre',
+    shortName: 'Call Centre',
+    floor: F,
+    category: 'administration',
+    description: 'Appointment booking call centre, behind the patient lobby.',
+    icon: 'office',
+    // Swapped with Office Services, as confirmed by the college.
+    shape: { polys: [rect(g, 190, 1372, 300, 1422)] },
+    label: g(245, 1397),
+    labelSize: 12,
+    door: g(302, 1397),
+    entryNode: 'core_w2',
+    keywords: ['call centre', 'call center', 'appointments', 'booking', 'telephone'],
+    primary: false,
+  },
+  {
+    id: 'g-office-services',
+    name: 'Office Services',
+    shortName: 'Office Services',
+    floor: F,
+    category: 'administration',
+    description: 'Administrative office services, behind the patient lobby.',
+    icon: 'admin',
+    // Swapped with the Call Centre, as confirmed by the college.
+    shape: { polys: [rect(g, 190, 1318, 300, 1368)] },
+    label: g(245, 1343),
+    labelSize: 12,
+    door: g(302, 1343),
+    entryNode: 'west_am',
+    keywords: ['office services', 'admin', 'printing', 'photocopy'],
+    primary: false,
+  },
+
+  /* --- Prayer rooms, west ---------------------------------------- */
+  {
+    id: 'g-prayer-w-f',
+    name: "Women's Prayer Room",
+    shortName: "Women's Prayer",
+    floor: F,
+    category: 'secondary',
+    description: 'Prayer room for women, with its own toilets and ablution area.',
+    icon: 'prayer',
+    shape: { polys: [rect(g, 190, 1436, 300, 1488)] },
+    label: g(245, 1462),
+    labelSize: 12,
+    door: g(245, 1434),
+    doorMarks: [g(245, 1436)],
+    entryNode: 'west_s_1',
+    keywords: ['prayer', 'musalla', 'women', 'ladies', 'female', 'ablution'],
+    primary: false,
+  },
+  {
+    id: 'g-prayer-w-m',
+    name: "Men's Prayer Room",
+    shortName: "Men's Prayer",
+    floor: F,
+    category: 'secondary',
+    description: 'Prayer room for men, with its own toilets and ablution area.',
+    icon: 'prayer',
+    shape: { polys: [rect(g, 304, 1436, 392, 1488)] },
+    label: g(348, 1462),
+    labelSize: 12,
+    door: g(348, 1434),
+    doorMarks: [g(348, 1436)],
+    entryNode: 'west_s_2',
+    keywords: ['prayer', 'musalla', 'men', 'male', 'ablution'],
+    primary: false,
+  },
+
+  /* --- Lockers and prayer rooms, east ---------------------------- */
+  {
+    id: 'g-lcr',
+    name: 'Lockers / Change Rooms',
+    shortName: 'LCR',
+    floor: F,
+    category: 'secondary',
+    description: 
+      'Locker and changing rooms for students, entered from the corridor beside the lifts.',
+    icon: 'store',
+    // One room, not split by gender: the college confirmed the whole
+    // block is a single locker and changing suite.
+    shape: { polys: [rect(g, 1420, 1078, 1568, 1350)] },
+    label: g(1494, 1214),
+    labelSize: 12,
+    door: g(1570, 1212),
+    doorMarks: [g(1568, 1212)],
+    entryNode: 'e_core_n',
+    keywords: ['lockers', 'changing', 'change room', 'lcr', 'men', 'women'],
+    primary: false,
+  },
+  {
+    id: 'g-prayer-e-m',
+    name: "Men's Prayer Room (East)",
+    shortName: "Men's Prayer",
+    floor: F,
+    category: 'secondary',
+    description: 'Prayer room for men in the east wing, off the student and staff lobby.',
+    icon: 'prayer',
+    shape: { polys: [rect(g, 1420, 1350, 1494, 1428)] },
+    label: g(1457, 1389),
+    labelSize: 12,
+    door: g(1457, 1430),
+    doorMarks: [g(1457, 1428)],
+    entryNode: 'men_lobby',
+    keywords: ['prayer', 'musalla', 'men', 'male', 'ablution'],
+    primary: false,
+  },
+
+  /* --- Parking --------------------------------------------------- */
+  {
+    id: 'g-parking',
+    name: 'Oman Dental College Parking',
+    shortName: 'Parking',
+    floor: F,
+    category: 'secondary',
+    description:
+      'Shaded visitor and staff car park behind the college, reached through the Student / Staff Entrance.',
+    icon: 'entrance',
+    shape: { polys: [rect(g, 1950, 1130, 2170, 1380)] },
+    label: g(2060, 1184),
+    labelSize: 13,
+    door: g(1990, 1382),
+    entryNode: 'park_in',
+    keywords: ['parking', 'car park', 'cars', 'vehicle', 'park'],
+    primary: true,
   },
 ]
 
 /* ------------------------------------------------------------------ */
-/* Secondary spaces — visible, muted, never listed                     */
+/* Secondary spaces — drawn, muted, never listed                       */
+/*                                                                     */
+/* Toilets keep a small label so visitors can find them. Technical and  */
+/* back-of-house spaces carry no label at all: no name, no icon, no     */
+/* card, no search entry and no route.                                 */
 /* ------------------------------------------------------------------ */
 
+/** A pale technical shape with nothing written on it. */
+const technical = (id: string, polys: Pt[][]): SecondarySpace => ({
+  id,
+  name: '',
+  floor: F,
+  kind: 'core',
+  shape: { polys },
+})
+
 export const groundSecondary: SecondarySpace[] = [
-  {
-    id: 'g-s-wing-toiletf',
-    name: 'Toilets',
-    floor: F,
-    kind: 'toilet',
-    shape: { polys: [wRect(826, 12, 872, 74)] },
-    label: w(849, 43),
-  },
+  /* --- Postgraduate wing ----------------------------------------- */
   {
     id: 'g-s-wing-toiletm',
-    name: 'Toilets',
+    name: 'Toilets M',
     floor: F,
     kind: 'toilet',
-    shape: { polys: [wRect(845, 291, 872, 351)] },
+    // The college confirmed the gender arrangement is the other way
+    // round from the sheet: men upstream by the exit, women at the end.
+    shape: { polys: [wRect(826, 12, 872, 74)] },
+    label: w(849, 43),
+    labelSize: 11,
   },
   {
-    id: 'g-s-wing-surgery1',
-    name: 'Surgery',
+    id: 'g-s-wing-toiletf',
+    name: 'Toilets F',
     floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(898, 12, 975, 118)] },
-    label: w(936, 65),
+    kind: 'toilet',
+    shape: { polys: [wRect(826, 291, 872, 351)] },
+    label: w(849, 321),
+    labelSize: 11,
   },
-  {
-    id: 'g-s-wing-meet1',
-    name: 'Meeting',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(898, 126, 975, 192)] },
-    label: w(936, 159),
-  },
-  {
-    id: 'g-s-wing-meet2',
-    name: 'Meeting',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(898, 196, 975, 248)] },
-    label: w(936, 222),
-  },
-  {
-    id: 'g-s-wing-surgery2',
-    name: 'Surgery',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(898, 252, 975, 351)] },
-    label: w(936, 302),
-  },
-  {
-    id: 'g-s-compressor',
-    name: 'Plant Room',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(412, 351, 600, 425)] },
-    label: w(506, 388),
-  },
-  {
-    id: 'g-s-photography',
-    name: '',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [wRect(325, 351, 402, 398)] },
-  },
+  technical('g-s-wing-store', [wRect(259.5, 291, 316.5, 351)]),
+  technical('g-s-wing-tail', [wRect(PG_TAIL.a0, 12, PG_TAIL.a1, 74)]),
+  technical('g-s-compressor', [wRect(412, 351, 600, 425)]),
+  technical('g-s-photography', [wRect(325, 351, 402, 398)]),
 
-  {
-    id: 'g-s-xray-proc',
-    name: '',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 442, 888, 522, 916)] },
-  },
-  {
-    id: 'g-s-opg',
-    name: 'OPG',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 442, 918, 522, 956)] },
-    label: g(482, 937),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-imaging-wait',
-    name: 'Waiting',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 442, 958, 522, 1000)] },
-    label: g(482, 979),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-isolation',
-    name: 'Isolation',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 442, 1002, 522, 1044)] },
-    label: g(482, 1023),
-    labelSize: 11,
-  },
-
+  /* --- Laboratory ------------------------------------------------- */
   {
     id: 'g-s-lab',
     name: 'Dental Laboratory',
     floor: F,
     kind: 'service',
     shape: {
-      polys: [poly(g, [[190, 528], [334, 471], [334, 836], [190, 836]])],
+      // Its east wall stops clear of the wing, which the traced
+      // outline overshot by enough to clip the first treatment room.
+      polys: [poly(g, [[190, 528], [326, 474], [326, 836], [190, 836]])],
       dividers: [
-        [g(190, 578), g(334, 578)],
-        [g(190, 636), g(334, 636)],
-        [g(190, 694), g(334, 694)],
-        [g(190, 750), g(334, 750)],
-        [g(190, 800), g(334, 800)],
+        [g(190, 578), g(326, 578)],
+        [g(190, 636), g(326, 636)],
+        [g(190, 694), g(326, 694)],
+        [g(190, 750), g(326, 750)],
+        [g(190, 800), g(326, 800)],
         [g(262, 578), g(262, 802)],
       ],
     },
     label: g(262, 700),
     labelSize: 19,
   },
-  {
-    id: 'g-s-coffee-kitchen',
-    name: '',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 192, 806, 258, 836)] },
-  },
-  {
-    id: 'g-s-security-desk',
-    name: 'Security',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 192, 1218, 296, 1272)] },
-  },
-  {
-    id: 'g-s-callcentre',
-    name: 'Call Centre',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 190, 1276, 268, 1330)] },
-    label: g(229, 1303),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-photocopy',
-    name: '',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 272, 1276, 336, 1330)] },
-  },
-  {
-    id: 'g-s-offices-services',
-    name: 'Office Services',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 190, 1334, 300, 1388)] },
-    label: g(245, 1361),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-prayer-w',
-    name: 'Prayer Rooms & Toilets',
-    floor: F,
-    kind: 'toilet',
-    shape: {
-      polys: [rect(g, 190, 1392, 380, 1488)],
-      dividers: [
-        [g(250, 1392), g(250, 1488)],
-        [g(312, 1392), g(312, 1488)],
-        [g(190, 1424), g(380, 1424)],
-      ],
-    },
-    label: g(285, 1462),
-    labelSize: 11,
-  },
+  technical('g-s-coffee-kitchen', [rect(g, 192, 806, 258, 836)]),
 
-  {
-    id: 'g-s-nurse-station',
-    name: 'Nurse Station',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 955, 1123, 1072, 1196)] },
-    label: g(1013, 1160),
-    labelSize: 12,
-  },
-  {
-    id: 'g-s-hvac',
-    name: 'Services',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 955, 1200, 1072, 1314)] },
-    label: g(1013, 1257),
-    labelSize: 12,
-  },
-  {
-    id: 'g-s-stair02-tech',
-    name: '',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 1040, 1318, 1072, 1398)] },
-  },
-  {
-    id: 'g-s-big-nurse',
-    name: 'Nurse Station',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 448, 1200, 490, 1262)] },
-  },
-  {
-    id: 'g-s-it-room',
-    name: 'IT',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 456, 1322, 490, 1394)] },
-  },
+  /* --- West amenities -------------------------------------------- */
 
+  /* --- Undergraduate clinic core --------------------------------- */
+  technical('g-s-hvac', [rect(g, UC_CORE.x0, 1214, UC_CORE.x1, 1326)]),
+
+  /* --- East core and lockers -------------------------------------- */
   {
-    id: 'g-s-lockers-prayer',
-    name: 'Lockers & Prayer Rooms',
+    id: 'g-s-toilet-e-m',
+    name: 'Toilets M',
     floor: F,
     kind: 'toilet',
-    shape: {
-      polys: [rect(g, 1412, 1080, 1548, 1425)],
-      dividers: [
-        [g(1412, 1166), g(1548, 1166)],
-        [g(1412, 1230), g(1548, 1230)],
-        [g(1412, 1300), g(1548, 1300)],
-        [g(1412, 1360), g(1548, 1360)],
-        [g(1490, 1230), g(1490, 1300)],
-      ],
-    },
-    label: g(1480, 1198),
-    labelSize: 12,
-  },
-  {
-    id: 'g-s-east-toilets',
-    name: 'Toilets',
-    floor: F,
-    kind: 'toilet',
-    shape: { polys: [rect(g, 1552, 1080, 1640, 1178)] },
-    label: g(1596, 1129),
+    shape: { polys: [rect(g, 1494, 1350, 1568, 1428)] },
+    label: g(1531, 1389),
     labelSize: 11,
+    doorMarks: [g(1496, 1391)],
   },
-  {
-    id: 'g-s-east-tech',
-    name: '',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 1490, 1362, 1545, 1425)] },
-  },
-  {
-    id: 'g-s-activity',
-    name: 'Activity Room',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 1612, 1430, 1656, 1488)] },
-    label: g(1634, 1459),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-canteen-kitchen',
-    name: 'Kitchen',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 1816, 1080, 1900, 1200)] },
-    label: g(1858, 1140),
-    labelSize: 11,
-  },
-  {
-    id: 'g-s-lift5',
-    name: '',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 1818, 1206, 1862, 1250)] },
-  },
-  {
-    id: 'g-s-store-e',
-    name: 'Stores',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 1866, 1206, 1900, 1296)] },
-  },
-  {
-    id: 'g-s-janitor-e',
-    name: '',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(g, 1818, 1254, 1862, 1296)] },
-  },
-  {
-    id: 'g-s-compressor-room',
-    name: 'Compressor Room',
-    floor: F,
-    kind: 'core',
-    shape: { polys: [rect(g, 1792, 997, 1902, 1072)] },
-    label: g(1847, 1034),
-    labelSize: 11,
-  },
+  /* --- Canteen back of house -------------------------------------- */
+  technical('g-s-canteen-kitchen', [rect(g, 1794, 1100, 1904, 1200)]),
+  technical('g-s-lift5', [rect(g, 1818, 1206, 1862, 1250)]),
+  technical('g-s-store-e', [rect(g, 1866, 1206, 1904, 1296)]),
+  technical('g-s-janitor-e', [rect(g, 1818, 1254, 1862, 1296)]),
+  // The compressor room above the canteen: a pale shape and nothing else.
+  technical('g-s-compressor-room', [rect(g, 1792, 997, 1902, 1072)]),
 ]
 
 /* ------------------------------------------------------------------ */
 /* Corridor graph — routes are computed on these nodes only            */
 /* ------------------------------------------------------------------ */
+
+/** A node on the main clinic corridor, at the mouth of each aisle. */
+const aisleNodes: Record<string, Pt> = {}
+const aisleEdges: [string, string][] = []
+UC_AISLES.forEach(({ i, x0, x1 }) => {
+  const mid = (x0 + x1) / 2
+  aisleNodes[`mc_a${i}`] = g(mid, 1100)
+  aisleNodes[`sc_a${i}`] = g(mid, 1460)
+  aisleEdges.push([`mc_a${i}`, `sc_a${i}`])
+})
 
 export const groundNodes: Record<string, Pt> = {
   /* Patient lobby */
@@ -876,85 +1158,107 @@ export const groundNodes: Record<string, Pt> = {
   lob_a: g(262, 1142),
   lob_n1: g(262, 1040),
   lob_n2: g(262, 972),
-  lob_e: g(360, 1040),
+  lob_e: g(392, 1040),
 
-  /* Postgraduate circulation */
-  pg_1: g(392, 1040),
-  pg_2: g(396, 956),
-  pg_3: g(392, 880),
-  pg_4: g(382, 800),
-  pg_5: g(360, 660),
-  wing_w_n: g(363, 563),
-  wing_w_s: g(426, 724),
+  /* Postgraduate lobby */
+  pg_1: g(430, 1040),
+  pg_2: g(430, 953),
+  pg_3: g(430, 880),
+  pg_4: g(414, 800),
+  pg_5: g(388, 700),
+  // Approached along the corridor axis, so the walk into the wing
+  // never cuts diagonally across the treatment rows.
+  pg_wn_out: w(128, 96),
+  wing_w_n: w(150, 96),
+  pg_ws_out: w(128, 269),
+  wing_w_s: w(150, 269),
 
+  /* Imaging and sterile corridors */
   cor_cbct_s: g(530, 1050),
   cor_cbct_m: g(530, 950),
-  cor_cbct_n: g(530, 863),
+  cor_cbct_n: g(530, 875),
+  opg_mid: g(482, 924),
+  opg_e: g(530, 924),
   cor_cssd_s: g(645, 1050),
   cor_cssd_m: g(645, 950),
   cor_cssd_n: g(647, 820),
 
   /* Main clinic corridor along the south wing */
-  mc_w: g(396, 1100),
-  mc_uc: g(459, 1100),
+  mc_w: g(400, 1100),
+  mc_uc: g(457, 1100),
   mc_cbct: g(530, 1100),
   mc_1: g(606, 1100),
   mc_cssd: g(645, 1100),
-  mc_2: g(719, 1100),
-  mc_2b: g(776, 1100),
-  mc_3: g(832, 1100),
-  mc_4: g(943, 1100),
-  mc_5: g(1078, 1100),
-  mc_6: g(1185, 1100),
-  mc_7: g(1297, 1100),
-  mc_e: g(1404, 1100),
+  mc_core: g(1038, 1100),
+  mc_e: g(1425, 1100),
+  ...aisleNodes,
 
-  /* West core */
-  core_w0: g(346, 1160),
-  core_w1: g(346, 1228),
-  core_w2: g(346, 1358),
+  /* West core and amenities */
+  core_w0: g(337, 1160),
+  core_w1: g(337, 1277),
+  core_w2: g(337, 1340),
+  west_am: g(302, 1340),
+  west_s_mid: g(337, 1430),
+  stair01_s: g(430, 1430),
+  west_s_1: g(245, 1430),
+  west_s_2: g(348, 1430),
+  mc_uw: g(402, 1100),
+  uc_w_a: g(402, 1163),
+  uc_gate: g(402, 1224),
+  mc_ue: g(501, 1100),
+  uc_e_n: g(501, 1160),
+  uc_e_s: g(501, 1345),
 
   /* Student / staff circulation */
-  sc_1: g(606, 1460),
-  sc_2: g(719, 1460),
-  sc_3: g(832, 1460),
-  sc_4: g(943, 1460),
-  sc_5: g(1078, 1460),
-  sc_6: g(1185, 1460),
-  sc_7: g(1297, 1460),
-  sc_e: g(1404, 1460),
-  mc_stair02: g(943, 1358),
+  sc_w: g(424, 1460),
+  sc_core: g(1038, 1460),
+  sc_e: g(1425, 1460),
 
+  /* East core */
   ss_lobby: g(1500, 1455),
+  ss_lobby_e: g(1620, 1455),
   ent_staff: g(1500, 1480),
-  e_core_n: g(1562, 1187),
-  lift34: g(1562, 1232),
-  e_core_m: g(1562, 1356),
-  e_core_s: g(1562, 1445),
-  east_link_n: g(1666, 1187),
-  east_link_s: g(1666, 1330),
-  east_link_b: g(1666, 1407),
-  ss_mid: g(1736, 1407),
-  ss_far: g(1858, 1407),
+  e_stair_s: g(1602, 1412),
+  men_lobby: g(1457, 1440),
+  e_core_n: g(1600, 1214),
+  e_link_n: g(1666, 1214),
+  staff_door: g(1630, 1212),
+  east_cross_w: g(1602, 1089),
+  east_cross_m: g(1666, 1089),
+  east_link_s: g(1666, 1300),
+  east_link_b: g(1666, 1390),
+  smcr_w: g(1700, 1444),
+  smcr_e: g(1860, 1444),
+
+  /* Parking, behind the east side of the college */
+  park_turn: g(1860, 1510),
+  park_in: g(1990, 1382),
 
   /* Angled wing corridors */
+  wing_w_exit: w(161, 44),
+  wing_n_0: w(161, 96),
   wing_n_1: w(200, 96),
-  wing_n_2: w(340, 96),
-  wing_n_3: w(440, 96),
-  wing_n_4: w(497, 96),
+  wing_n_2: w(288, 96),
+  wing_n_3: w(400, 96),
+  wing_n_4: w(490, 96),
   wing_n_5: w(620, 96),
   wing_n_6: w(760, 96),
   wing_n_7: w(885, 96),
   wing_s_1: w(200, 269),
-  wing_s_2: w(340, 269),
-  wing_s_3: w(440, 269),
-  wing_s_4: w(503, 269),
+  wing_s_2: w(288, 269),
+  wing_s_3: w(400, 269),
+  wing_s_4: w(490, 269),
   wing_s_5: w(620, 269),
   wing_s_6: w(760, 269),
   wing_s_7: w(885, 269),
+  wing_ne_exit: w(885, 20),
+  wing_x_n: w(885, 65),
+  wing_x_m: w(885, 190),
+  wing_x_s: w(885, 302),
 }
 
 export const groundEdges: [string, string][] = [
+  /* Patient lobby */
   ['ent_patient', 'lob_a'],
   ['lob_a', 'lob_n1'],
   ['lob_n1', 'lob_n2'],
@@ -963,62 +1267,92 @@ export const groundEdges: [string, string][] = [
   ['lob_a', 'core_w0'],
   ['core_w0', 'core_w1'],
   ['core_w1', 'core_w2'],
+  ['core_w2', 'west_am'],
+  ['core_w2', 'west_s_mid'],
+  ['west_s_mid', 'stair01_s'],
+  ['west_s_mid', 'west_s_1'],
+  ['stair01_s', 'west_s_2'],
+  ['stair01_s', 'sc_w'],
+
+  /* Postgraduate lobby up to the wing */
   ['pg_1', 'pg_2'],
   ['pg_2', 'pg_3'],
   ['pg_3', 'pg_4'],
   ['pg_4', 'pg_5'],
-  ['pg_5', 'wing_w_n'],
-  ['pg_5', 'wing_w_s'],
-  ['wing_w_n', 'wing_n_1'],
+  ['pg_5', 'pg_wn_out'],
+  ['pg_wn_out', 'wing_w_n'],
+  ['pg_5', 'pg_ws_out'],
+  ['pg_ws_out', 'wing_w_s'],
+  ['wing_w_n', 'wing_n_0'],
+  ['wing_n_0', 'wing_w_exit'],
+  ['wing_n_0', 'wing_n_1'],
   ['wing_w_s', 'wing_s_1'],
   ['pg_1', 'mc_w'],
-  ['pg_2', 'cor_cbct_m'],
+
+  /* Imaging and sterile corridors */
   ['cor_cbct_s', 'cor_cbct_m'],
   ['cor_cbct_m', 'cor_cbct_n'],
+  ['cor_cbct_m', 'opg_e'],
+  ['opg_e', 'opg_mid'],
   ['cor_cssd_s', 'cor_cssd_m'],
   ['cor_cssd_m', 'cor_cssd_n'],
   ['cor_cbct_s', 'mc_cbct'],
   ['cor_cssd_s', 'mc_cssd'],
   ['pg_3', 'cor_cssd_m'],
+
+  /* Main clinic corridor */
   ['mc_w', 'mc_uc'],
   ['mc_uc', 'mc_cbct'],
   ['mc_cbct', 'mc_1'],
   ['mc_1', 'mc_cssd'],
-  ['mc_cssd', 'mc_2'],
-  ['mc_2', 'mc_2b'],
-  ['mc_2b', 'mc_3'],
-  ['mc_3', 'mc_4'],
-  ['mc_4', 'mc_5'],
-  ['mc_5', 'mc_6'],
-  ['mc_6', 'mc_7'],
-  ['mc_7', 'mc_e'],
-  ['mc_1', 'sc_1'],
-  ['mc_2', 'sc_2'],
-  ['mc_3', 'sc_3'],
-  ['mc_4', 'sc_4'],
-  ['mc_5', 'sc_5'],
-  ['mc_6', 'sc_6'],
-  ['mc_7', 'sc_7'],
+  ['mc_cssd', 'mc_a0'],
+  ['mc_a0', 'mc_a1'],
+  ['mc_a1', 'mc_a2'],
+  ['mc_a2', 'mc_a3'],
+  ['mc_a3', 'mc_core'],
+  ['mc_core', 'mc_a5'],
+  ['mc_a5', 'mc_a6'],
+  ['mc_a6', 'mc_a7'],
+  ['mc_a7', 'mc_e'],
+  ['mc_uc', 'mc_ue'],
+  ['mc_ue', 'uc_e_n'],
+  ['uc_e_n', 'uc_e_s'],
+  ['mc_w', 'mc_uw'],
+  ['mc_uw', 'uc_w_a'],
+  ['uc_w_a', 'uc_gate'],
+
+  /* Student / staff circulation, around the bottom of the clinic */
+  ['sc_w', 'sc_a0'],
+  ['sc_a0', 'sc_a1'],
+  ['sc_a1', 'sc_a2'],
+  ['sc_a2', 'sc_a3'],
+  ['sc_a3', 'sc_core'],
+  ['sc_core', 'sc_a5'],
+  ['sc_a5', 'sc_a6'],
+  ['sc_a6', 'sc_a7'],
+  ['sc_a7', 'sc_e'],
   ['mc_e', 'sc_e'],
-  ['sc_1', 'sc_2'],
-  ['sc_2', 'sc_3'],
-  ['sc_3', 'sc_4'],
-  ['sc_4', 'sc_5'],
-  ['sc_5', 'sc_6'],
-  ['sc_6', 'sc_7'],
-  ['sc_7', 'sc_e'],
-  ['sc_4', 'mc_stair02'],
+  ...aisleEdges,
+
+  /* East core */
   ['sc_e', 'ss_lobby'],
   ['ss_lobby', 'ent_staff'],
-  ['ss_lobby', 'e_core_s'],
-  ['e_core_s', 'e_core_m'],
-  ['e_core_m', 'lift34'],
-  ['lift34', 'e_core_n'],
-  ['e_core_n', 'east_link_n'],
-  ['east_link_n', 'east_link_s'],
+  ['ent_staff', 'park_turn'],
+  ['park_turn', 'park_in'],
+  ['ss_lobby', 'ss_lobby_e'],
+  ['ss_lobby', 'e_stair_s'],
+  ['ss_lobby', 'men_lobby'],
+  ['e_core_n', 'staff_door'],
+  ['e_core_n', 'e_link_n'],
+  ['e_link_n', 'east_cross_m'],
+  ['east_cross_w', 'east_cross_m'],
+  ['east_cross_m', 'east_link_s'],
   ['east_link_s', 'east_link_b'],
-  ['east_link_b', 'ss_mid'],
-  ['ss_mid', 'ss_far'],
+  ['east_link_b', 'ss_lobby_e'],
+  ['ss_lobby_e', 'smcr_w'],
+  ['smcr_w', 'smcr_e'],
+
+  /* Angled wing corridors */
   ['wing_n_1', 'wing_n_2'],
   ['wing_n_2', 'wing_n_3'],
   ['wing_n_3', 'wing_n_4'],
@@ -1031,5 +1365,9 @@ export const groundEdges: [string, string][] = [
   ['wing_s_4', 'wing_s_5'],
   ['wing_s_5', 'wing_s_6'],
   ['wing_s_6', 'wing_s_7'],
-  ['wing_n_7', 'wing_s_7'],
+  ['wing_n_7', 'wing_x_n'],
+  ['wing_x_n', 'wing_x_m'],
+  ['wing_x_m', 'wing_x_s'],
+  ['wing_x_s', 'wing_s_7'],
+  ['wing_n_7', 'wing_ne_exit'],
 ]
