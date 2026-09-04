@@ -939,6 +939,31 @@ button {
   align-items: flex-start;
 }
 
+/* Controlled clinical area: stated plainly, before the route button. */
+.card__restricted {
+  margin: 10px 13px 0;
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: #fbecec;
+  border: 1px solid #eec9c9;
+  color: #8d3232;
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.card__restricted strong {
+  display: block;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
+.card__restricted span {
+  display: block;
+  line-height: 1.4;
+}
+
 .card__actions {
   display: flex;
   gap: 8px;
@@ -1443,4 +1468,60 @@ button {
     stroke-dasharray: none;
     opacity: 0.55;
   }
+}
+
+/* ---------------------------------------------------------------- */
+/* Car park                                                          */
+/*                                                                   */
+/* Quiet greys throughout: the building is the subject, the parking   */
+/* only has to read as parking.                                      */
+/* ---------------------------------------------------------------- */
+
+.park__canopy {
+  fill: #dfe6e9;
+  stroke: #c3cfd4;
+  stroke-width: 2;
+}
+
+.park__bay {
+  stroke: #b7c4ca;
+  stroke-width: 1.6;
+}
+
+.park__badge {
+  fill: #8b9aa1;
+}
+
+.park__badge-text {
+  fill: #ffffff;
+  font-size: 23px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.park__label {
+  fill: #7a8f98;
+  font-size: 21px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.park__flow path {
+  stroke: #8b9aa1;
+  stroke-width: 2.4;
+  fill: none;
+}
+
+.park__flow-label {
+  fill: #7a8f98;
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+/* A doorway: a small opening drawn in the wall it sits in. */
+.map__door {
+  fill: #ffffff;
+  stroke: #9fb3ba;
+  stroke-width: 2.2;
 }

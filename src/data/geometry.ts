@@ -71,6 +71,13 @@ export const wRect = (a0: number, b0: number, a1: number, b1: number): Pt[] => [
   w(a0, b1),
 ]
 
+/** SVG point -> wing-local (a, b). The inverse of `w`. */
+export const wingLocal = (p: Pt): Pt => {
+  const dx = p[0] + 120 - WING_ORIGIN.x
+  const dy = p[1] + 130 - WING_ORIGIN.y
+  return [dx * WING_U.x + dy * WING_U.y, dx * WING_V.x + dy * WING_V.y]
+}
+
 /** Depth of the wing: rooms sit between b = 12 and b = 351. */
 export const WING_SOUTH = 351
 
