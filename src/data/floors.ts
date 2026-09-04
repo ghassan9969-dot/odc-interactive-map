@@ -131,7 +131,7 @@ export const FLOORS: FloorDefinition[] = [
     name: 'Ground Floor',
     shortName: 'Ground',
     level: 'G',
-    width: 2050,
+    width: 1830,
     height: 1520,
     outline: GROUND_OUTLINE,
     northAngle: 21,
