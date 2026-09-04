@@ -1470,62 +1470,6 @@ button {
   }
 }
 
-/* ---------------------------------------------------------------- */
-/* Car park                                                          */
-/*                                                                   */
-/* Quiet greys throughout: the building is the subject, the parking   */
-/* only has to read as parking.                                      */
-/* ---------------------------------------------------------------- */
-
-.park__canopy {
-  fill: #dfe6e9;
-  stroke: #c3cfd4;
-  stroke-width: 2;
-}
-
-.park__road {
-  fill: none;
-  stroke: #dfe6e9;
-  stroke-width: 18;
-  stroke-linecap: round;
-}
-
-.park__bay {
-  stroke: #b7c4ca;
-  stroke-width: 1.6;
-}
-
-.park__badge {
-  fill: #8b9aa1;
-}
-
-.park__badge-text {
-  fill: #ffffff;
-  font-size: 23px;
-  font-weight: 700;
-  text-anchor: middle;
-}
-
-.park__label {
-  fill: #7a8f98;
-  font-size: 21px;
-  font-weight: 700;
-  text-anchor: middle;
-}
-
-.park__flow path {
-  stroke: #8b9aa1;
-  stroke-width: 2.4;
-  fill: none;
-}
-
-.park__flow-label {
-  fill: #7a8f98;
-  font-size: 13px;
-  font-weight: 600;
-  text-anchor: middle;
-}
-
 /* A doorway: a small opening drawn in the wall it sits in. */
 .map__door {
   fill: #ffffff;

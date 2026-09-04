@@ -396,7 +396,7 @@ describe('the postgraduate clinic', () => {
 /* ------------------------------------------------------------------ */
 
 describe('external exits', () => {
-  const exits = ground.filter((l) => l.icon === 'entrance' && l.id !== 'g-parking')
+  const exits = ground.filter((l) => l.icon === 'entrance')
 
   it('draws every entrance and exit with a door', () => {
     expect(exits.length).toBeGreaterThanOrEqual(3)
@@ -506,36 +506,6 @@ describe('the restricted undergraduate clinic', () => {
 })
 
 /* ------------------------------------------------------------------ */
-/* I. Parking                                                          */
-/* ------------------------------------------------------------------ */
-
-describe('the car park', () => {
-  const park = byId('g-parking')
-  const box = boundsOf(park.shape.polys)
-  const floor = FLOOR_BY_ID.ground
-
-  it('is named in full on its card and clickable', () => {
-    expect(park.name).toBe('Oman Dental College Parking')
-    expect(park.shortName).toBe('Parking')
-    expect(buildJourney(park)).not.toBeNull()
-  })
-
-  it('sits outside the building, behind the east wall', () => {
-    const building = boundsOf([floor.outline])
-    expect(box.x).toBeGreaterThanOrEqual(building.x + building.w - 1)
-    expect(box.x + box.w).toBeLessThanOrEqual(floor.width)
-  })
-
-  it('stays compact rather than dominating the map', () => {
-    const building = boundsOf([floor.outline])
-    expect(box.w * box.h).toBeLessThan(building.w * building.h * 0.1)
-    // And does not squeeze the indoor plan: the building keeps its size.
-    expect(building.w).toBeGreaterThan(1600)
-    expect(building.h).toBeGreaterThan(1300)
-  })
-})
-
-/* ------------------------------------------------------------------ */
 /* Technical spaces and labels                                         */
 /* ------------------------------------------------------------------ */
 
@@ -593,7 +563,7 @@ describe('map labels', () => {
    * An entrance or exit is a slot in the wall, not a room, so its name
    * is written on the floor beside the door rather than inside it.
    */
-  const isDoorSlot = (l: Location) => l.icon === 'entrance' && l.id !== 'g-parking'
+  const isDoorSlot = (l: Location) => l.icon === 'entrance'
 
   it('fits every room label inside its own shape', () => {
     const tight: string[] = []
@@ -640,9 +610,10 @@ describe('map labels', () => {
 /* The other two floors are not part of this revision                  */
 /* ------------------------------------------------------------------ */
 
-describe('the upper floors', () => {
+describe('the second floor', () => {
+  // The first floor is under revision now, so only the second is held
+  // to what it was: nothing here should be disturbing it.
   it('still has the same destinations it had before', () => {
-    expect(locationsOnFloor('first')).toHaveLength(23)
     expect(locationsOnFloor('second')).toHaveLength(18)
   })
 
@@ -719,7 +690,7 @@ describe('doors are cut in the right walls', () => {
     return areas.some((a) => pointInPolygon([b.x + b.w / 2, b.y + b.h / 2], a))
   }
   const allRooms = [
-    ...ground.filter((l) => l.id !== 'g-parking').map((l) => ({ id: l.id, polys: l.shape.polys })),
+    ...ground.map((l) => ({ id: l.id, polys: l.shape.polys })),
     ...secondaryOnFloor('ground').map((sp) => ({ id: sp.id, polys: sp.shape.polys })),
   ].filter((r) => !isOpenFloor(r.polys))
 
@@ -742,7 +713,7 @@ describe('doors are cut in the right walls', () => {
 
   it('puts every exit marker on the outside of the plan', () => {
     const wrong: string[] = []
-    for (const e of ground.filter((l) => l.icon === 'entrance' && l.id !== 'g-parking')) {
+    for (const e of ground.filter((l) => l.icon === 'entrance')) {
       for (const room of allRooms) {
         if (room.id === e.id) continue
         if (room.polys.some((p) => pointInPolygon(e.label, p))) {

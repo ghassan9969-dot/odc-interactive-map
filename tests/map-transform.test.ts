@@ -163,9 +163,9 @@ describe('client space to viewBox space', () => {
   })
 
   it('centres the plan in the spare axis', () => {
-    // The wider east-side parking makes landscape slightly width-limited.
-    expect(landscape.offsetX).toBeCloseTo(20, 6)
-    expect(landscape.offsetY).toBeGreaterThan(100)
+    // Landscape is height-limited here, so the slack is horizontal.
+    expect(landscape.offsetY).toBeCloseTo(100, 6)
+    expect(landscape.offsetX).toBeGreaterThan(20)
     // Portrait is width-limited, so the slack is vertical.
     expect(portrait.offsetX).toBeCloseTo(0, 6)
     expect(portrait.offsetY).toBeGreaterThan(0)

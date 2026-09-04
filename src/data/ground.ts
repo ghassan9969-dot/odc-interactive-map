@@ -251,15 +251,6 @@ export const groundCirculation: CirculationArea[] = [
   // The mixed common room is one large open student area; the walk to
   // the female common room crosses it, exactly as the plan intends.
   { id: 'g-circ-smcr', floor: F, polys: [rect(g, 1660, 1396, 1904, 1490)] },
-  // Outdoor approach to the east-side parking plot.
-  {
-    id: 'g-circ-parking-road',
-    floor: F,
-    polys: [
-      poly(g, [[1480, 1468], [1870, 1490], [1878, 1530], [1480, 1504]]),
-      poly(g, [[1842, 1488], [1878, 1528], [2015, 1395], [1970, 1368]]),
-    ],
-  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -1025,24 +1016,6 @@ export const groundLocations: Location[] = [
     primary: false,
   },
 
-  /* --- Parking --------------------------------------------------- */
-  {
-    id: 'g-parking',
-    name: 'Oman Dental College Parking',
-    shortName: 'Parking',
-    floor: F,
-    category: 'secondary',
-    description:
-      'Shaded visitor and staff car park behind the college, reached through the Student / Staff Entrance.',
-    icon: 'entrance',
-    shape: { polys: [rect(g, 1950, 1130, 2170, 1380)] },
-    label: g(2060, 1184),
-    labelSize: 13,
-    door: g(1990, 1382),
-    entryNode: 'park_in',
-    keywords: ['parking', 'car park', 'cars', 'vehicle', 'park'],
-    primary: true,
-  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -1230,10 +1203,6 @@ export const groundNodes: Record<string, Pt> = {
   smcr_w: g(1700, 1444),
   smcr_e: g(1860, 1444),
 
-  /* Parking, behind the east side of the college */
-  park_turn: g(1860, 1510),
-  park_in: g(1990, 1382),
-
   /* Angled wing corridors */
   wing_w_exit: w(161, 44),
   wing_n_0: w(161, 96),
@@ -1337,8 +1306,6 @@ export const groundEdges: [string, string][] = [
   /* East core */
   ['sc_e', 'ss_lobby'],
   ['ss_lobby', 'ent_staff'],
-  ['ent_staff', 'park_turn'],
-  ['park_turn', 'park_in'],
   ['ss_lobby', 'ss_lobby_e'],
   ['ss_lobby', 'e_stair_s'],
   ['ss_lobby', 'men_lobby'],
