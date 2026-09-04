@@ -23,24 +23,32 @@ const COURTYARD = poly(g, [
 /* ------------------------------------------------------------------ */
 /* Car park                                                            */
 /*                                                                     */
-/* Behind the south facade, in the strip of the viewBox left below the  */
-/* building. Enough bays to read as parking, and no more: the college   */
-/* plan itself stays the subject of the drawing.                       */
+/* Behind the east side of the college, as shown in the site photo and */
+/* the user's marked-up reference. It stays compact so the floor plan   */
+/* remains the subject of the drawing.                                 */
 /* ------------------------------------------------------------------ */
 
-const PARK = { x0: 1020, y0: 1512, x1: 1620, y1: 1624 }
-/** Shaded canopy over the middle of the bays, as on the real forecourt. */
-const CANOPY = { x0: 1054, y0: 1548, x1: 1586, y1: 1600 }
-const BAY_COUNT = 9
+const PARK = { x0: 1950, y0: 1130, x1: 2170, y1: 1380 }
+/** Shaded canopy over a few representative bays. */
+const CANOPY = { x0: 1972, y0: 1190, x1: 2148, y1: 1340 }
+const BAY_COUNT = 5
 
 function CarPark() {
   const bayStep = (CANOPY.x1 - CANOPY.x0) / BAY_COUNT
-  const [labelX, labelY] = g((PARK.x0 + PARK.x1) / 2, 1534)
-  const [inX, inY] = g(PARK.x0 - 6, 1600)
-  const [outX, outY] = g(PARK.x1 + 6, 1600)
+  const [inX, inY] = g(1990, PARK.y1)
+  const [outX, outY] = g(2130, PARK.y1)
+  const roadStart = g(1500, 1492)
+  const roadBend = g(1840, 1510)
+  const roadEnd = g(1990, PARK.y1 + 14)
 
   return (
     <g pointerEvents="none" className="park">
+      {/* Short approach road from the south facade, curving east. */}
+      <path
+        d={`M${roadStart[0]} ${roadStart[1]} C${roadStart[0] + 120} ${roadStart[1] + 30}, ${roadBend[0] - 90} ${roadBend[1] + 18}, ${roadBend[0]} ${roadBend[1]} S${roadEnd[0] - 50} ${roadEnd[1]}, ${roadEnd[0]} ${roadEnd[1]}`}
+        className="park__road"
+      />
+
       {/* canopy */}
       <path d={toPath(poly(g, [
         [CANOPY.x0, CANOPY.y0],
@@ -52,34 +60,29 @@ function CarPark() {
       {/* bays under the canopy */}
       {Array.from({ length: BAY_COUNT - 1 }, (_, i) => {
         const x = CANOPY.x0 + bayStep * (i + 1)
-        const [x1, y1] = g(x, CANOPY.y0 + 6)
-        const [x2, y2] = g(x, CANOPY.y1 - 6)
+        const [x1, y1] = g(x, CANOPY.y0 + 8)
+        const [x2, y2] = g(x, CANOPY.y1 - 8)
         return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} className="park__bay" />
       })}
 
       {/* P badge and name */}
-      <g transform={`translate(${g(PARK.x0 + 52, 1534).join(' ')})`}>
-        <rect x={-17} y={-17} width={34} height={34} rx={9} className="park__badge" />
-        <text x={0} y={9} className="park__badge-text">
+      <g transform={`translate(${g(PARK.x0 + 24, 1154).join(' ')})`}>
+        <rect x={-13} y={-13} width={26} height={26} rx={7} className="park__badge" />
+        <text x={0} y={7} className="park__badge-text">
           P
         </text>
       </g>
-      <text x={labelX} y={labelY + 8} className="park__label">
-        Parking
-      </text>
-
-      {/* way in, on the west side */}
+      {/* Entry and exit both sit on the lower side of the plot. */}
       <g className="park__flow">
-        <path d={`M${inX - 34} ${inY} L${inX - 6} ${inY}`} markerEnd="url(#park-arrow)" />
-        <text x={inX - 20} y={inY - 12} className="park__flow-label">
+        <path d={`M${inX} ${inY + 34} L${inX} ${inY + 6}`} markerEnd="url(#park-arrow)" />
+        <text x={inX} y={inY + 52} className="park__flow-label">
           Parking Entrance
         </text>
       </g>
 
-      {/* way out, on the east side */}
       <g className="park__flow">
-        <path d={`M${outX + 6} ${outY} L${outX + 34} ${outY}`} markerEnd="url(#park-arrow)" />
-        <text x={outX + 20} y={outY - 12} className="park__flow-label">
+        <path d={`M${outX} ${outY + 6} L${outX} ${outY + 34}`} markerEnd="url(#park-arrow)" />
+        <text x={outX} y={outY + 52} className="park__flow-label">
           Parking Exit
         </text>
       </g>

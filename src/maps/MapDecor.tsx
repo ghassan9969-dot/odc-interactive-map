@@ -9,20 +9,22 @@ import type { Pt } from '../data/types'
 export function YouAreHere({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at[0]} ${at[1]})`}>
-      <circle r={30} fill="#087E92" opacity={0.18} className="pulse-ring" />
-      <circle r={30} fill="#087E92" opacity={0.14} className="pulse-ring" style={{ animationDelay: '0.7s' }} />
-      <path
-        d="M0 8 C -16 -10, -23 -22, -23 -31 A 23 23 0 1 1 23 -31 C 23 -22, 16 -10, 0 8 Z"
-        fill="#087E92"
-        stroke="#ffffff"
-        strokeWidth={4.5}
-      />
-      <circle cx={0} cy={-31} r={8.5} fill="#ffffff" />
-      <g transform="translate(56 36)">
-        <rect x={-92} y={-16} width={184} height={32} rx={16} fill="#087E92" />
-        <text className="yah__label" y={1}>
-          YOU ARE HERE
-        </text>
+      <g transform="scale(.68)">
+        <circle r={30} fill="#087E92" opacity={0.18} className="pulse-ring" />
+        <circle r={30} fill="#087E92" opacity={0.14} className="pulse-ring" style={{ animationDelay: '0.7s' }} />
+        <path
+          d="M0 8 C -16 -10, -23 -22, -23 -31 A 23 23 0 1 1 23 -31 C 23 -22, 16 -10, 0 8 Z"
+          fill="#087E92"
+          stroke="#ffffff"
+          strokeWidth={4.5}
+        />
+        <circle cx={0} cy={-31} r={8.5} fill="#ffffff" />
+        <g transform="translate(0 30)">
+          <rect x={-68} y={-13} width={136} height={26} rx={13} fill="#087E92" />
+          <text className="yah__label" y={1}>
+            YOU ARE HERE
+          </text>
+        </g>
       </g>
     </g>
   )

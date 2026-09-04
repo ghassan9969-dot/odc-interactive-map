@@ -115,6 +115,8 @@ export interface SecondarySpace {
   shape: MapShape
   label?: Pt
   labelSize?: number
+  /** Important internal door openings, kept subtle on support rooms. */
+  doorMarks?: Pt[]
   /** Kind of support space; drives the (very subtle) tint. */
   kind: 'service' | 'toilet' | 'core'
 }

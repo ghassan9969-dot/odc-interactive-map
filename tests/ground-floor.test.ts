@@ -63,6 +63,18 @@ describe('the patient entrance area', () => {
     expect(box.w).toBeGreaterThan(180)
     expect(box.h).toBeGreaterThan(200)
     expect(box.w * box.h).toBeGreaterThan(40000)
+    expect(byId('g-patient-waiting').category).toBe('circulation')
+  })
+
+  it('keeps PC Reception separate from the waiting lobby', () => {
+    const waiting = boundsOf(byId('g-patient-waiting').shape.polys)
+    const reception = boundsOf(byId('g-pc-reception').shape.polys)
+    const overlaps =
+      waiting.x < reception.x + reception.w &&
+      waiting.x + waiting.w > reception.x &&
+      waiting.y < reception.y + reception.h &&
+      waiting.y + waiting.h > reception.y
+    expect(overlaps).toBe(false)
   })
 
   it('leaves an open aisle on both sides of the UC Reception desk', () => {
@@ -76,6 +88,17 @@ describe('the patient entrance area', () => {
     // Slim and upright, so it never fills the way into the clinic.
     expect(desk.h).toBeGreaterThan(desk.w)
   })
+
+  it('keeps the west lift and stair as one core with NS1 beside it', () => {
+    const lifts = boundsOf(byId('g-lift-12').shape.polys)
+    const stair = boundsOf(byId('g-stair-01').shape.polys)
+    const ns1 = boundsOf(byId('g-uc-nurse-1').shape.polys)
+    expect(lifts.x).toBeCloseTo(stair.x, 3)
+    expect(lifts.w).toBeCloseTo(stair.w, 3)
+    expect(lifts.y + lifts.h).toBeCloseTo(stair.y, 3)
+    expect(ns1.x).toBeGreaterThan(stair.x + stair.w)
+    expect(ns1.w).toBeLessThan(stair.w)
+  })
 })
 
 /* ------------------------------------------------------------------ */
@@ -83,13 +106,18 @@ describe('the patient entrance area', () => {
 /* ------------------------------------------------------------------ */
 
 describe('the imaging column', () => {
-  it('runs CBCT, OPG 2, corridor, OPG 1, Recovery Room from the top', () => {
-    const order = ['g-cbct', 'g-opg-2', 'g-opg-1', 'g-recovery'].map(
+  it('runs OPG 2, corridor, OPG 1 and the larger Recovery Room from the top', () => {
+    expect(ground.some((l) => l.id === 'g-cbct')).toBe(false)
+    const order = ['g-opg-2', 'g-opg-1', 'g-recovery'].map(
       (id) => boundsOf(byId(id).shape.polys).y,
     )
     for (let i = 1; i < order.length; i++) {
       expect(order[i], `item ${i} sits below item ${i - 1}`).toBeGreaterThan(order[i - 1])
     }
+    expect(boundsOf(byId('g-recovery').shape.polys).h).toBeGreaterThanOrEqual(
+      boundsOf(byId('g-opg-1').shape.polys).h,
+    )
+    expect(byId('g-pg-cbct')).toBeTruthy()
   })
 
   it('faces the OPG doors at each other across the corridor', () => {
@@ -212,10 +240,14 @@ describe('the east lift and stair core', () => {
     expect(stair.doorMarks![0][1]).toBeCloseTo(box.y + box.h, 3)
   })
 
-  it('sits the locker and prayer rooms right against the core', () => {
+  it('joins the locker and prayer rooms to the core through the left-side entrance', () => {
     const core = boundsOf(byId('g-lift-34').shape.polys)
     const lockers = boundsOf(byId('g-lockers-f').shape.polys)
-    expect(core.x - (lockers.x + lockers.w)).toBeLessThan(40)
+    const connector = boundsOf(
+      circulationOnFloor('ground').find((c) => c.id === 'g-circ-e-women')!.polys,
+    )
+    expect(connector.x).toBeLessThanOrEqual(lockers.x + lockers.w + 1)
+    expect(connector.x + connector.w).toBeGreaterThanOrEqual(core.x - 1)
   })
 
   it('keeps the prayer and locker rooms searchable', () => {
@@ -459,10 +491,10 @@ describe('the car park', () => {
     expect(buildJourney(park)).not.toBeNull()
   })
 
-  it('sits outside the building, behind the south wall', () => {
+  it('sits outside the building, behind the east wall', () => {
     const building = boundsOf([floor.outline])
-    expect(box.y).toBeGreaterThanOrEqual(building.y + building.h - 1)
-    expect(box.y + box.h).toBeLessThanOrEqual(floor.height)
+    expect(box.x).toBeGreaterThanOrEqual(building.x + building.w - 1)
+    expect(box.x + box.w).toBeLessThanOrEqual(floor.width)
   })
 
   it('stays compact rather than dominating the map', () => {

@@ -1483,6 +1483,13 @@ button {
   stroke-width: 2;
 }
 
+.park__road {
+  fill: none;
+  stroke: #dfe6e9;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
 .park__bay {
   stroke: #b7c4ca;
   stroke-width: 1.6;
