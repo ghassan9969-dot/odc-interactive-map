@@ -86,7 +86,7 @@ interface Bank {
   cols: 1 | 2
 }
 
-const UC_BANKS: Bank[] = [
+export const UC_BANKS: Bank[] = [
   { x0: 510, x1: 596, cols: 2 },
   { x0: 624, x1: 710, cols: 2 },
   { x0: 737, x1: 823, cols: 2 },
@@ -101,10 +101,10 @@ const UC_BANKS: Bank[] = [
 
 /** The core the two middle singles sit either side of. */
 const UC_CORE = { x0: 1008, x1: 1068 }
-const UC_TOP = 1123
-const UC_BOTTOM = 1432
+export const UC_TOP = 1123
+export const UC_BOTTOM = 1432
 /** Seven rows of chairs, from the `3X3` tag rows in the drawing. */
-const UC_ROWS = 7
+export const UC_ROWS = 7
 
 /** Every bank as a polygon, used for drawing and for the access tests. */
 export const ucBankPolys: Pt[][] = UC_BANKS.map((b) => rect(g, b.x0, UC_TOP, b.x1, UC_BOTTOM))
@@ -127,13 +127,13 @@ const UC_AISLES = UC_BANKS.slice(0, -1)
  */
 const PG_HALF = 28.5
 
-interface PgRow {
+export interface PgRow {
   b0: number
   b1: number
   a: number[]
 }
 
-const PG_ROWS: PgRow[] = [
+export const PG_ROWS: PgRow[] = [
   // Eleven spaces along the top row. The third from the west carries no
   // cabinet tag on the sheet — it is the Head of Clinic Office, and the
   // college's marked-up reference puts the office exactly there.
@@ -144,7 +144,7 @@ const PG_ROWS: PgRow[] = [
 ]
 
 /** The Head of Clinic Office: third space from the western end, top row. */
-const HOC_A = PG_ROWS[0].a[2]
+export const HOC_A = PG_ROWS[0].a[2]
 
 /** The short unfitted run between the last treatment room and the toilets. */
 const PG_TAIL = { a0: 777.5, a1: 826 }
@@ -153,13 +153,21 @@ const PG_TAIL = { a0: 777.5, a1: 826 }
 const PG_EXIT = { a0: 150, a1: 172 }
 
 /**
- * One treatment space. The first space of the top row is cut back to
- * its east half, because the exit lobby beside the laboratory takes
- * the rest of that bay.
+ * One treatment space, in the wing's own coordinates. The first space
+ * of the top row is cut back to its east half, because the exit lobby
+ * beside the laboratory takes the rest of that bay. Everything that
+ * needs a bay rectangle reads it from here, so nothing can drift.
  */
+export const pgBayLocal = (a: number, row: PgRow) => ({
+  a0: row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF,
+  a1: a + PG_HALF,
+  b0: row.b0,
+  b1: row.b1,
+})
+
 const pgUnit = (a: number, row: PgRow): Pt[] => {
-  const west = row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF
-  return wRect(west, row.b0, a + PG_HALF, row.b1)
+  const r = pgBayLocal(a, row)
+  return wRect(r.a0, r.b0, r.a1, r.b1)
 }
 
 /** All 40 postgraduate spaces, less the one given over to the office. */
@@ -594,7 +602,6 @@ export const groundLocations: Location[] = [
     label: g(776, 1101),
     labelSize: 26,
     door: g(508, 1224),
-    doorMarks: [g(508, 1224)],
     entryNode: 'uc_gate',
     keywords: ['undergraduate', 'student clinic', 'dental chairs', 'treatment', 'cabinets'],
     primary: true,

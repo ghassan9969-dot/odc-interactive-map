@@ -8,6 +8,7 @@ import { useMapTransform } from '../hooks/useMapTransform'
 import { MapIcon } from './MapIcon'
 import { MapControls } from './MapControls'
 import { GroundFloorDecor } from '../maps/GroundFloorMap'
+import { DentalUnitDefs, DentalUnits } from '../maps/DentalUnit'
 import { FirstFloorDecor } from '../maps/FirstFloorMap'
 import { SecondFloorDecor } from '../maps/SecondFloorMap'
 
@@ -137,6 +138,9 @@ export function FloorMap({
             <filter id="plan-shadow" x="-10%" y="-10%" width="130%" height="130%">
               <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#0c3c46" floodOpacity="0.16" />
             </filter>
+            {/* The treatment unit symbol, defined once for every bay
+                that draws one. */}
+            <DentalUnitDefs />
           </defs>
 
           <g ref={map.layerRef}>
@@ -271,6 +275,7 @@ export function FloorMap({
                         className="map__divider"
                       />
                     ))}
+                    <DentalUnits locationId={loc.id} />
                     {loc.shape.polys.map((p, i) => (
                       <path key={`f${i}`} d={toPath(p)} className="room__focus" fill="none" />
                     ))}
