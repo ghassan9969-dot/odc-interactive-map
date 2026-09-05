@@ -430,6 +430,7 @@ export const secondLocations: Location[] = [
 
   {
     id: 's-lift-12',
+    tone: 'lift' as const,
     name: 'Lifts L1 & L2',
     shortName: 'Lifts L1 / L2',
     floor: F,
@@ -449,6 +450,7 @@ export const secondLocations: Location[] = [
   },
   {
     id: 's-stair-01',
+    tone: 'stair' as const,
     name: 'Stair 01',
     shortName: 'Stair 01',
     floor: F,
@@ -465,6 +467,7 @@ export const secondLocations: Location[] = [
   },
   {
     id: 's-stair-02',
+    tone: 'stair' as const,
     name: 'Stair 02',
     shortName: 'Stair 02',
     floor: F,
@@ -607,6 +610,7 @@ export const secondSecondary: SecondarySpace[] = [
   // searchable, listed, nor routable.
   {
     id: 's-s-lift-34',
+    tone: 'lift' as const,
     name: 'Lifts L3 & L4',
     floor: F,
     kind: 'core',
@@ -619,6 +623,7 @@ export const secondSecondary: SecondarySpace[] = [
   },
   {
     id: 's-s-stair-03',
+    tone: 'stair' as const,
     name: 'Stair 03',
     floor: F,
     kind: 'core',

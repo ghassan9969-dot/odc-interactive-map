@@ -295,6 +295,14 @@ const UC_RESTRICTED = {
   routeVia: 'g-uc-reception',
 } as const
 
+/** The postgraduate wing is controlled the same way, from its own desk. */
+const PG_RESTRICTED = {
+  title: 'Restricted Clinical Area',
+  message:
+    'Please check in at PC Reception. Protective clothing and staff permission are required before entering.',
+  routeVia: 'g-pc-reception',
+} as const
+
 export const groundLocations: Location[] = [
   /* --- Entrances and exits --------------------------------------- */
   {
@@ -372,6 +380,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-uc-reception',
     name: 'UC Reception',
+    tone: 'uc-soft' as const,
     shortName: 'UC Reception',
     floor: F,
     category: 'reception',
@@ -392,6 +401,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pc-reception',
     name: 'PC Reception',
+    tone: 'pg-soft' as const,
     shortName: 'PC Reception',
     floor: F,
     category: 'reception',
@@ -411,6 +421,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pg-clinic',
     name: 'Postgraduate Clinic',
+    tone: 'pg' as const,
     shortName: 'PG Clinic',
     floor: F,
     category: 'clinical',
@@ -428,6 +439,7 @@ export const groundLocations: Location[] = [
     entryNode: 'wing_n_4',
     keywords: ['consultation rooms', 'postgraduate', 'specialist', 'pg clinic', 'dental'],
     primary: true,
+    restricted: PG_RESTRICTED,
   },
   {
     id: 'g-pg-hoc',
@@ -450,6 +462,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pg-waiting',
     name: 'Postgraduate Clinic Waiting Area',
+    tone: 'pg' as const,
     shortName: 'PG Waiting Area',
     floor: F,
     category: 'clinical',
@@ -549,6 +562,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-uc-clinic',
+    tone: 'uc' as const,
     name: 'Undergraduate Clinic',
     shortName: 'UG Clinic',
     floor: F,
@@ -766,6 +780,7 @@ export const groundLocations: Location[] = [
   /* --- Vertical circulation -------------------------------------- */
   {
     id: 'g-lift-12',
+    tone: 'lift' as const,
     name: 'Lifts L1 & L2',
     shortName: 'Lifts L1 / L2',
     floor: F,
@@ -782,6 +797,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-01',
+    tone: 'stair' as const,
     name: 'Stair 01',
     shortName: 'Stair 01',
     floor: F,
@@ -800,6 +816,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-lift-34',
+    tone: 'lift' as const,
     name: 'Lifts L3 & L4',
     shortName: 'Lifts L3 / L4',
     floor: F,
@@ -817,6 +834,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-02',
+    tone: 'stair' as const,
     name: 'Stair 02',
     shortName: 'Stair 02',
     floor: F,
@@ -833,6 +851,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-03',
+    tone: 'stair' as const,
     name: 'Stair 03',
     shortName: 'Stair 03',
     floor: F,

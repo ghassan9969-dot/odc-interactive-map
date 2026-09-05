@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
+import { CATEGORIES, FLOOR_BY_ID, ZONE_TONES, roomPaint } from '../data/floors'
 import { boundsOf, toPath } from '../data/geometry'
 import { circulationOnFloor, locationsOnFloor, secondaryOnFloor } from '../data/locations'
 import { pathAsSvg, type Route } from '../data/routes'
@@ -40,7 +40,7 @@ function wrapLabel(name: string, maxChars: number): string[] {
 }
 
 /** Muted caption for a support space, wrapped to fit its room. */
-function SecondaryLabel({ space }: { space: SecondarySpace }) {
+function SecondaryLabel({ space, color }: { space: SecondarySpace; color?: string }) {
   const size = space.labelSize ?? 13
   const box = boundsOf(space.shape.polys)
   const lines = wrapLabel(space.name, Math.max(6, Math.round(box.w / (size * 0.54))))
@@ -50,7 +50,7 @@ function SecondaryLabel({ space }: { space: SecondarySpace }) {
       x={lx}
       y={ly - ((lines.length - 1) * size * 1.05) / 2}
       className="map__secondary-label"
-      style={{ fontSize: size }}
+      style={{ fontSize: size, fill: color }}
     >
       {lines.map((line, i) => (
         <tspan key={i} x={lx} dy={i === 0 ? 0 : size * 1.05}>
@@ -164,13 +164,20 @@ export function FloorMap({
 
             {/* --- secondary spaces ------------------------------- */}
             <g>
-              {secondary.map((s) => (
+              {secondary.map((s) => {
+                // A support space that is really a lift or a stair takes
+                // the same wayfinding colour as the ones that are rooms.
+                const tone = s.tone ? ZONE_TONES[s.tone] : null
+                return (
                 <g key={s.id}>
                   {s.shape.polys.map((p, i) => (
                     <path
                       key={i}
                       d={toPath(p)}
                       className={`map__secondary map__secondary--${s.kind}`}
+                      // Inline, because the class rule would win over a
+                      // presentation attribute.
+                      style={tone ? { fill: tone.fill, stroke: tone.stroke } : undefined}
                     />
                   ))}
                   {s.shape.dividers?.map(([a, b], i) => (
@@ -184,15 +191,17 @@ export function FloorMap({
                       opacity={0.5}
                     />
                   ))}
-                  {s.name && s.label && <SecondaryLabel space={s} />}
+                  {s.name && s.label && <SecondaryLabel space={s} color={tone?.text} />}
                 </g>
-              ))}
+                )
+              })}
             </g>
 
             {/* --- destinations ----------------------------------- */}
             <g>
               {locations.map((loc) => {
                 const cat = CATEGORIES[loc.category]
+                const paint = roomPaint(loc)
                 const selected = loc.id === selectedId
                 const dimmed = selectedId !== null && !selected
                 const size = loc.labelSize ?? 18
@@ -211,8 +220,15 @@ export function FloorMap({
                 if (lines.some((l) => l.length > maxChars * 1.15)) {
                   lines = wrapLabel(loc.shortName, maxChars)
                 }
-                const showIcon = !upright && size >= 15 && box.h > size * 3
-                const iconSize = Math.min(size * 1.7, box.h * 0.42)
+                // A lift or a stair must never be identified by colour
+                // alone, so its pictogram is drawn even in the small cores
+                // where the general rule would have dropped it.
+                const vertical = loc.tone === 'lift' || loc.tone === 'stair'
+                const showIcon =
+                  !upright && box.h > size * (vertical ? 2.4 : 3) && (vertical || size >= 15)
+                const iconSize = vertical
+                  ? Math.min(size * 1.6, box.h * 0.3, box.w * 0.55)
+                  : Math.min(size * 1.7, box.h * 0.42)
                 const textTop = showIcon ? loc.label[1] + size * 0.62 : loc.label[1] - ((lines.length - 1) * size) / 2
 
                 return (
@@ -241,8 +257,8 @@ export function FloorMap({
                         key={i}
                         d={toPath(p)}
                         className="room__shape"
-                        fill={selected ? cat.fill : cat.fill}
-                        stroke={selected ? '#E4761B' : cat.stroke}
+                        fill={paint.fill}
+                        stroke={selected ? '#E4761B' : paint.stroke}
                       />
                     ))}
                     {loc.shape.dividers?.map(([a, b], i) => (
@@ -264,7 +280,7 @@ export function FloorMap({
                         x={loc.label[0]}
                         y={loc.label[1] - size * 0.95}
                         size={iconSize}
-                        color={cat.text}
+                        color={paint.icon}
                         opacity={0.9}
                         strokeWidth={2}
                       />
@@ -273,7 +289,7 @@ export function FloorMap({
                       x={loc.label[0]}
                       y={textTop}
                       className="room__label"
-                      fill={cat.text}
+                      fill={paint.text}
                       style={{ fontSize: size }}
                       transform={
                         upright ? `rotate(-90 ${loc.label[0]} ${loc.label[1]})` : undefined

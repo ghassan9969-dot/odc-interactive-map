@@ -58,6 +58,14 @@ export type IconType =
   | 'activity'
   | 'play'
 
+/**
+ * The two clinical teams wear different uniforms, and the college
+ * wants the plan to carry the same identity: navy through the
+ * postgraduate clinic, marine blue through the undergraduate one.
+ * The `-soft` tints are for the desks that front each zone.
+ */
+export type ZoneToneId = 'pg' | 'pg-soft' | 'uc' | 'uc-soft' | 'lift' | 'stair'
+
 /** A room / zone drawn on a floor map. */
 export interface MapShape {
   /** One or more closed polygons (in SVG space) that make up the room. */
@@ -73,6 +81,11 @@ export interface Location {
   shortName: string
   floor: FloorId
   category: CategoryId
+  /**
+   * Paints this room in its clinical zone's colours instead of its
+   * category's. Nothing else about the room changes.
+   */
+  tone?: ZoneToneId
   description: string
   icon: IconType
   /** Geometry of the room, in SVG coordinates for its floor. */
@@ -123,6 +136,8 @@ export interface Location {
 /** Secondary rooms: drawn, labelled faintly, never listed or navigable. */
 export interface SecondarySpace {
   id: string
+  /** Paints this space in a wayfinding tone instead of its kind's grey. */
+  tone?: ZoneToneId
   name: string
   floor: FloorId
   shape: MapShape

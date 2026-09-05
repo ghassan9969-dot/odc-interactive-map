@@ -1,5 +1,5 @@
 import { Info, Lock, Navigation } from 'lucide-react'
-import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
+import { CATEGORIES, FLOOR_BY_ID, roomPaint } from '../data/floors'
 import type { Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
 
@@ -13,12 +13,13 @@ interface Props {
 
 export function LocationCard({ location, routeShown, floorHint, onRoute }: Props) {
   const cat = CATEGORIES[location.category]
+  const paint = roomPaint(location)
   const floor = FLOOR_BY_ID[location.floor]
 
   return (
     <div className="card">
       <div className="card__head">
-        <span className="card__icon" style={{ background: cat.fill, color: cat.text }} aria-hidden="true">
+        <span className="card__icon" style={{ background: paint.fill, color: paint.icon }} aria-hidden="true">
           <UiMapIcon type={location.icon} size={22} />
         </span>
         <div className="card__title">

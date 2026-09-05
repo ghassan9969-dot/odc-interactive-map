@@ -404,6 +404,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-lift-12',
+    tone: 'lift' as const,
     name: 'Lifts L1 & L2',
     shortName: 'Lifts L1 / L2',
     floor: F,
@@ -420,6 +421,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-01',
+    tone: 'stair' as const,
     name: 'Stair 01',
     shortName: 'Stair 01',
     floor: F,
@@ -437,6 +439,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-02',
+    tone: 'stair' as const,
     name: 'Stair 02',
     shortName: 'Stair 02',
     floor: F,
@@ -454,6 +457,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-lift-34',
+    tone: 'lift' as const,
     name: 'Lifts L3 & L4',
     shortName: 'Lifts L3 / L4',
     floor: F,
@@ -473,6 +477,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-03',
+    tone: 'stair' as const,
     name: 'Stair 03',
     shortName: 'Stair 03',
     floor: F,
