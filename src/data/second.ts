@@ -60,6 +60,7 @@ export const secondCirculation: CirculationArea[] = [
   },
   { id: 's-circ-sw', floor: F, polys: [rect(f2, 405, 1356, 452, 1478)] },
   { id: 's-circ-w', floor: F, polys: [rect(f2, 190, 1188, 208, 1352)] },
+  { id: 's-circ-s', floor: F, polys: [rect(f2, 452, 1356, 580, 1390)] },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -677,6 +678,8 @@ export const secondNodes: Record<string, Pt> = {
   v2_n: f2(596, 1230),
   v2_m: f2(596, 1300),
   sw_450: f2(430, 1420),
+  sw_top: f2(430, 1373),
+  sc_s: f2(516, 1373),
 }
 
 const chain = (ids: string[]): [string, string][] =>
@@ -693,6 +696,9 @@ export const secondEdges: [string, string][] = [
   ['v1_n', 'v1_s'],
   ['v1_s', 'v1_b'],
   ['v1_b', 'sw_450'],
+  ['sw_450', 'sw_top'],
+  ['sw_top', 'sc_s'],
+  ['sc_s', 'dc_596'],
   ['nc_596', 'v2_n'],
   ['v2_n', 'v2_dn'],
   ['v2_dn', 'v2_m'],
