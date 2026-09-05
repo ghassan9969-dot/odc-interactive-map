@@ -205,7 +205,7 @@ export function FloorMap({
                     return b.h > b.w * 5
                   }) && box.h > 140
                 const maxChars = Math.max(7, Math.round((upright ? box.h : box.w) / (size * 0.54)))
-                let lines = wrapLabel(loc.name, maxChars)
+                let lines = wrapLabel(loc.mapLabel ?? loc.name, maxChars)
                 // Long names fall back to the short form rather than spilling
                 // outside their room.
                 if (lines.some((l) => l.length > maxChars * 1.15)) {

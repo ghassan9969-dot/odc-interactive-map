@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { FLOOR_BY_ID } from '../src/data/floors'
-import { boundsOf, w, wingLocal } from '../src/data/geometry'
-import { ucBankPolys, pgTreatmentPolys } from '../src/data/ground'
+import { boundsOf, g, w, wingLocal } from '../src/data/geometry'
+import { PARKING, ucBankPolys, pgTreatmentPolys } from '../src/data/ground'
 import {
   CIRCULATION,
   LOCATIONS,
@@ -789,5 +789,123 @@ describe('the postgraduate wing exits', () => {
       }
     }
     expect([...new Set(overlap)]).toEqual([])
+  })
+})
+
+/* ------------------------------------------------------------------ */
+/* The car park                                                        */
+/*                                                                     */
+/* The college asked for it back, east of the building this time, in   */
+/* the open ground beside the plan rather than below it.               */
+/* ------------------------------------------------------------------ */
+
+describe('the car park', () => {
+  const park = byId('g-parking')
+  const plot = boundsOf(park.shape.polys)
+  /** Everything the plan already draws, rooms and support spaces alike. */
+  const existing = [
+    ...ground.filter((l) => l.id !== park.id).map((l) => ({ id: l.id, polys: l.shape.polys })),
+    ...secondaryOnFloor('ground').map((sp) => ({ id: sp.id, polys: sp.shape.polys })),
+  ]
+  const building = boundsOf(existing.flatMap((r) => r.polys))
+
+  it('stands east of the building, across a road-width gap', () => {
+    const gap = plot.x - (building.x + building.w)
+    expect(plot.x).toBeGreaterThan(building.x + building.w)
+    // Wide enough to read as an access road, narrow enough that it is
+    // plainly a road and not an empty field.
+    expect(gap).toBeGreaterThan(20)
+    expect(gap).toBeLessThan(90)
+  })
+
+  it('is not below the building', () => {
+    // Its top sits well above the south wall, so it reads as beside the
+    // plan rather than under it.
+    expect(plot.y).toBeLessThan(building.y + building.h * 0.5)
+    expect(plot.h).toBeGreaterThan(plot.w)
+  })
+
+  it('stays secondary to the college it serves', () => {
+    // A fifth of the plan's width; the college then pulled the foot
+    // down to the south end, so it now runs about seven tenths of the
+    // plan's height. Present, never dominant.
+    expect(plot.w / building.w).toBeGreaterThan(0.18)
+    expect(plot.w / building.w).toBeLessThan(0.27)
+    expect(plot.h / building.h).toBeGreaterThan(0.6)
+    expect(plot.h / building.h).toBeLessThan(0.78)
+  })
+
+  it('leaves the plan the size it was on a landscape screen', () => {
+    // A 1440-wide desktop gives the map a pane about 1052 by 696. The
+    // box has to stay narrow enough that the fit is still limited by
+    // height there, which is what keeps the plan drawing at its old
+    // scale rather than shrinking to make room for the car park.
+    const { width, height } = FLOOR_BY_ID.ground
+    expect(width / height).toBeLessThan(1052 / 696)
+  })
+
+  it('overlaps no room the plan already draws', () => {
+    const clashes: string[] = []
+    for (const room of existing) {
+      const b = boundsOf(room.polys)
+      if (
+        plot.x + plot.w - b.x > 1 &&
+        b.x + b.w - plot.x > 1 &&
+        plot.y + plot.h - b.y > 1 &&
+        b.y + b.h - plot.y > 1
+      ) {
+        clashes.push(room.id)
+      }
+    }
+    expect(clashes).toEqual([])
+  })
+
+  it('has a gate in and a gate out, on the road side and apart', () => {
+    const [inX, inY] = g(PARKING.x1, PARKING.gateInY)
+    const [outX, outY] = g(PARKING.x1, PARKING.gateOutY)
+    // Both on the east wall of the compound.
+    expect(inX).toBeCloseTo(plot.x + plot.w, 6)
+    expect(outX).toBeCloseTo(plot.x + plot.w, 6)
+    // One near the top, one near the foot, and never the same point.
+    expect(inY).toBeLessThan(plot.y + plot.h * 0.3)
+    expect(outY).toBeGreaterThan(plot.y + plot.h * 0.7)
+    // The road they open onto runs outside the compound.
+    expect(PARKING.roadX).toBeGreaterThan(PARKING.x1)
+  })
+
+  it('ends the walk at the entrance gate, not in the middle of the plot', () => {
+    const journey = buildJourney(park)!
+    const leg = journey.legs[journey.legs.length - 1]
+    const end = leg.route.points[leg.route.points.length - 1]
+    const gate = g(PARKING.x1, PARKING.gateInY)
+    expect(Math.hypot(end[0] - gate[0], end[1] - gate[1])).toBeLessThan(1)
+    // Which is nowhere near the centre of the compound.
+    const centre = [plot.x + plot.w / 2, plot.y + plot.h / 2]
+    expect(Math.hypot(end[0] - centre[0], end[1] - centre[1])).toBeGreaterThan(plot.w / 3)
+  })
+
+  it('quotes no distance, since it sits outside the surveyed plan', () => {
+    expect(park.routeNote).toBe('Follow the outdoor access path to the Parking Entrance.')
+  })
+
+  it('is listed, searchable and named as the college asked', () => {
+    expect(park.name).toBe('Oman Dental College Parking')
+    expect(park.shortName).toBe('Parking')
+    expect(park.floor).toBe('ground')
+    expect(park.description).toBe(
+      'Visitor parking located behind Oman Dental College, with clearly marked entrance and exit points.',
+    )
+    expect(park.keywords).toContain('parking')
+    expect(park.primary).toBe(true)
+  })
+
+  it('leaves the upper floors exactly as they were', () => {
+    expect(FLOOR_BY_ID.first.width).toBe(1905)
+    expect(FLOOR_BY_ID.first.height).toBe(632)
+    expect(FLOOR_BY_ID.second.width).toBe(1905)
+    expect(FLOOR_BY_ID.second.height).toBe(632)
+    for (const floor of ['first', 'second'] as const) {
+      expect(locationsOnFloor(floor).some((l) => l.id.includes('park'))).toBe(false)
+    }
   })
 })

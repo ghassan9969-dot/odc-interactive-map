@@ -1470,6 +1470,66 @@ button {
   }
 }
 
+/* ---------------------------------------------------------------- */
+/* Car park                                                          */
+/*                                                                   */
+/* The compound surface, its "P" and its name come from the room     */
+/* itself. These are the details on top: the fence, the bays and the */
+/* gates on the road side.                                           */
+/* ---------------------------------------------------------------- */
+
+.park__fence {
+  fill: none;
+  stroke: #6DAEB8;
+  stroke-width: 3.2;
+}
+
+.park__road {
+  fill: #EDF2F4;
+  stroke: #D8E3E6;
+  stroke-width: 2;
+}
+
+/* One rank of bays: the box round them, then the lines between. */
+.park__rank {
+  fill: none;
+  stroke: #93A6AE;
+  stroke-width: 2.6;
+}
+
+.park__bay {
+  stroke: #93A6AE;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.park__flow path {
+  fill: none;
+  stroke: #4A626C;
+  stroke-width: 4.4;
+  stroke-linecap: round;
+}
+
+.route-bar__note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #F4F8F9;
+  color: #26414B;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.park__flow-label {
+  fill: #4A626C;
+  font-size: 21px;
+  font-weight: 700;
+  text-anchor: end;
+}
+
 /* A doorway: a small opening drawn in the wall it sits in. */
 .map__door {
   fill: #ffffff;

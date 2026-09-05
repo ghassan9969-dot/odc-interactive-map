@@ -54,6 +54,7 @@ export type IconType =
   | 'prayer'
   | 'store'
   | 'utility'
+  | 'parking'
   | 'activity'
   | 'play'
 
@@ -76,6 +77,18 @@ export interface Location {
   icon: IconType
   /** Geometry of the room, in SVG coordinates for its floor. */
   shape: MapShape
+  /**
+   * What the plan draws inside the shape, where that has to differ
+   * from the name on the card. The car park is 'Parking' on the map
+   * and 'Oman Dental College Parking' everywhere else.
+   */
+  mapLabel?: string
+  /**
+   * Replaces the measured distance and the turn list on the route
+   * panel. The car park sits outside the surveyed plan, so quoting
+   * metres to it would be inventing precision the drawing lacks.
+   */
+  routeNote?: string
   /** Where the room label sits, in SVG coordinates. */
   label: Pt
   /** Font size override for the room label. */
