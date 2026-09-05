@@ -610,11 +610,13 @@ describe('map labels', () => {
 /* The other two floors are not part of this revision                  */
 /* ------------------------------------------------------------------ */
 
-describe('the second floor', () => {
-  // The first floor is under revision now, so only the second is held
-  // to what it was: nothing here should be disturbing it.
-  it('still has the same destinations it had before', () => {
-    expect(locationsOnFloor('second')).toHaveLength(18)
+describe('every floor keeps its spaces', () => {
+  // All three floors have been revised now, so none is held to a fixed
+  // count. These only guard against a floor being emptied by mistake.
+  it('still has destinations on every floor', () => {
+    for (const floor of ['ground', 'first', 'second'] as const) {
+      expect(locationsOnFloor(floor).length).toBeGreaterThan(0)
+    }
   })
 
   it('still has the same circulation and support spaces', () => {

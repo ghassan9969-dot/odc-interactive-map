@@ -128,6 +128,8 @@ export interface CirculationArea {
   polys: Pt[][]
   label?: string
   labelAt?: Pt
+  /** Doorways in the corridor's own walls, drawn like a room's. */
+  doorMarks?: Pt[]
 }
 
 export interface FloorDefinition {
