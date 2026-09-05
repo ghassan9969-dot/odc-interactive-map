@@ -492,6 +492,7 @@ export const secondLocations: Location[] = [
 export const secondSecondary: SecondarySpace[] = [
   {
     id: 's-s-toilets-n',
+    tone: 'toilet' as const,
     name: 'Toilets',
     floor: F,
     kind: 'toilet',
@@ -541,6 +542,7 @@ export const secondSecondary: SecondarySpace[] = [
   },
   {
     id: 's-s-toilets-wm',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -551,6 +553,7 @@ export const secondSecondary: SecondarySpace[] = [
   },
   {
     id: 's-s-toilets-wf',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',
@@ -575,6 +578,7 @@ export const secondSecondary: SecondarySpace[] = [
   },
   {
     id: 's-s-toilets-cm',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -586,6 +590,7 @@ export const secondSecondary: SecondarySpace[] = [
   {
     // The accessible toilet is the strip at its head.
     id: 's-s-toilets-cf',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',

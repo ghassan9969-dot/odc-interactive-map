@@ -1020,6 +1020,7 @@ export const groundLocations: Location[] = [
   /* --- Prayer rooms, west ---------------------------------------- */
   {
     id: 'g-prayer-w-f',
+    tone: 'prayer' as const,
     name: "Women's Prayer Room",
     shortName: "Women's Prayer",
     floor: F,
@@ -1037,6 +1038,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-prayer-w-m',
+    tone: 'prayer' as const,
     name: "Men's Prayer Room",
     shortName: "Men's Prayer",
     floor: F,
@@ -1076,6 +1078,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-prayer-e-m',
+    tone: 'prayer' as const,
     name: "Men's Prayer Room (East)",
     shortName: "Men's Prayer",
     floor: F,
@@ -1140,6 +1143,7 @@ export const groundSecondary: SecondarySpace[] = [
   /* --- Postgraduate wing ----------------------------------------- */
   {
     id: 'g-s-wing-toiletm',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -1151,6 +1155,7 @@ export const groundSecondary: SecondarySpace[] = [
   },
   {
     id: 'g-s-wing-toiletf',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',
@@ -1195,6 +1200,7 @@ export const groundSecondary: SecondarySpace[] = [
   /* --- East core and lockers -------------------------------------- */
   {
     id: 'g-s-toilet-e-m',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',

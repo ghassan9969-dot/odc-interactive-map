@@ -51,12 +51,25 @@ export const ZONE_TONES: Record<ZoneToneId, ZoneTone> = {
   // 4.2:1 and 3.3:1 on its own tint, to 7.7:1 and 6.4:1.
   lift: { fill: '#EEEAF8', stroke: '#7466A8', icon: '#7466A8', text: '#4A3F73' },
   stair: { fill: '#E3F2EC', stroke: '#4F8F78', icon: '#4F8F78', text: '#2F5D4C' },
+  // The quiet facilities. Warm sand for prayer, cool water for the
+  // toilets, both paler than any clinic, food area or selection, so a
+  // visitor scanning for a destination looks straight past them. The
+  // men's and women's rooms share a colour and are told apart by the
+  // name on the plan, never by the tint.
+  prayer: { fill: '#F6F0E3', stroke: '#B08A4A', icon: '#B08A4A', text: '#654B21' },
+  toilet: { fill: '#E8F1F5', stroke: '#6F98AA', icon: '#6F98AA', text: '#365E70' },
 }
 
 /** The lifts and stairs, keyed together as one way of moving between floors. */
 export const VERTICAL_ZONES: { tone: ZoneToneId; label: string }[] = [
   { tone: 'lift', label: 'Lifts' },
   { tone: 'stair', label: 'Stairs' },
+]
+
+/** Prayer rooms and toilets, keyed together as the quiet facilities. */
+export const FACILITY_ZONES: { tone: ZoneToneId; label: string }[] = [
+  { tone: 'prayer', label: 'Prayer Rooms' },
+  { tone: 'toilet', label: 'Toilets' },
 ]
 
 /** The small key that tells the two clinics apart, beside the legend. */

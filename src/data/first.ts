@@ -530,6 +530,7 @@ export const firstLocations: Location[] = [
 export const firstSecondary: SecondarySpace[] = [
   {
     id: 'f-s-toilets-w1',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',
@@ -560,6 +561,7 @@ export const firstSecondary: SecondarySpace[] = [
   },
   {
     id: 'f-s-toilets-c',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -569,6 +571,7 @@ export const firstSecondary: SecondarySpace[] = [
   },
   {
     id: 'f-s-toilets-e1',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { CATEGORIES, CLINIC_ZONES, VERTICAL_ZONES, ZONE_TONES } from '../data/floors'
+import { CATEGORIES, CLINIC_ZONES, FACILITY_ZONES, VERTICAL_ZONES, ZONE_TONES } from '../data/floors'
 
 const ORDER = ['clinical', 'learning', 'laboratory', 'food', 'administration', 'reception', 'secondary'] as const
 
@@ -47,13 +47,15 @@ export function MapLegend() {
             Navigation route
           </li>
       </ul>
-      {/* Two small keys beside the categories: the clinical teams, told
-          apart by the colour of their own uniforms, and the ways up and
-          down. The categories above still read as the categories. */}
+      {/* Three small keys beside the categories: the clinical teams,
+          told apart by the colour of their own uniforms, the ways up
+          and down, and the quiet facilities. The categories above still
+          read as the categories. */}
       <div className="legend__keys" id="map-legend-zones" hidden={!open}>
         {[
           { title: 'Clinical zones', zones: CLINIC_ZONES },
           { title: 'Vertical circulation', zones: VERTICAL_ZONES },
+          { title: 'Quiet facilities', zones: FACILITY_ZONES },
         ].map((group) => (
           <div className="legend__key" key={group.title}>
             <span className="legend__key-title">{group.title}</span>

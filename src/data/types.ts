@@ -63,8 +63,19 @@ export type IconType =
  * wants the plan to carry the same identity: navy through the
  * postgraduate clinic, marine blue through the undergraduate one.
  * The `-soft` tints are for the desks that front each zone.
+ *
+ * `prayer` and `toilet` are the quiet facilities: one warm, one cool,
+ * both lighter than any destination so they never compete with one.
  */
-export type ZoneToneId = 'pg' | 'pg-soft' | 'uc' | 'uc-soft' | 'lift' | 'stair'
+export type ZoneToneId =
+  | 'pg'
+  | 'pg-soft'
+  | 'uc'
+  | 'uc-soft'
+  | 'lift'
+  | 'stair'
+  | 'prayer'
+  | 'toilet'
 
 /** A room / zone drawn on a floor map. */
 export interface MapShape {
