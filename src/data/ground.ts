@@ -18,6 +18,13 @@
 
 import type { CirculationArea, Location, SecondarySpace, Pt } from './types'
 import { g, rect, poly, w, wRect } from './geometry'
+// Imported rather than referenced by path, so the built site gets
+// hashed URLs that work under the Pages sub-path.
+import canteenPhoto from '../assets/locations/canteen-restaurant.webp'
+import parkingPhoto from '../assets/locations/oman-dental-college-parking.webp'
+import pgClinicPhoto from '../assets/locations/postgraduate-clinic.webp'
+import studentsCommonPhoto from '../assets/locations/students-mixed-common-room.webp'
+import ucClinicPhoto from '../assets/locations/undergraduate-clinic.webp'
 
 const F = 'ground' as const
 
@@ -428,6 +435,9 @@ export const groundLocations: Location[] = [
     description:
       'Specialist treatment wing with 39 clinical treatment rooms, arranged in four rows around a central waiting area.',
     icon: 'clinic',
+    image: pgClinicPhoto,
+    imageAlt: 'Dental treatment room in the Postgraduate Clinic',
+    imagePosition: '60% center',
     shape: {
       polys: pgTreatmentPolys,
       dividers: PG_ROWS.flatMap(pgRowDividers),
@@ -570,6 +580,9 @@ export const groundLocations: Location[] = [
     description:
       'The main clinical teaching and patient treatment area, with student chair banks either side of the central Stair 02 core.',
     icon: 'clinic',
+    image: ucClinicPhoto,
+    imageAlt: 'Undergraduate Clinic at Oman Dental College',
+    imagePosition: 'center 55%',
     shape: {
       polys: ucBankPolys,
       dividers: UC_BANKS.flatMap((b) =>
@@ -762,6 +775,9 @@ export const groundLocations: Location[] = [
     category: 'food',
     description: 'Main dining hall serving hot meals for students and staff.',
     icon: 'restaurant',
+    image: canteenPhoto,
+    imageAlt: 'Cafeteria seating area at Oman Dental College',
+    imagePosition: 'center 62%',
     shape: {
       polys: [rect(g, 1694, 1100, 1790, 1390)],
       dividers: [
@@ -896,6 +912,9 @@ export const groundLocations: Location[] = [
     description:
       'The large shared student common room across the south-east of the building, opening onto the student and staff lobby.',
     icon: 'students',
+    image: studentsCommonPhoto,
+    imageAlt: 'Foosball table in the Students Mixed Common Room',
+    imagePosition: 'center 60%',
     // Extends the whole way across the lower area to the female
     // students common room, as confirmed by the college.
     shape: { polys: [rect(g, 1660, 1396, 1904, 1490)] },
@@ -1078,6 +1097,9 @@ export const groundLocations: Location[] = [
     description:
       'Visitor parking located behind Oman Dental College, with clearly marked entrance and exit points.',
     icon: 'parking',
+    image: parkingPhoto,
+    imageAlt: 'Aerial view of Oman Dental College visitor parking',
+    imagePosition: 'center',
     mapLabel: 'Parking',
     shape: { polys: [rect(g, PARKING.x0, PARKING.y0, PARKING.x1, PARKING.y1)] },
     label: g(2121, 1000),

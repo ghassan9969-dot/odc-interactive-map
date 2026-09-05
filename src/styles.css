@@ -1085,6 +1085,29 @@ button {
   color: var(--brand-strong);
 }
 
+/* A photograph of the room. The wrapper owns the size and clips; the
+   image simply fills it. The ratio is declared rather than a height, so
+   the box is reserved before the photograph arrives and nothing
+   reflows, and so the picture keeps its shape as the panel changes
+   width. The stacked layout overrides it below, where the card runs the
+   full width of the screen and 16:9 would be far too deep. */
+.card__photo {
+  margin: 0 var(--sp-4) var(--sp-3);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--e-1);
+  background: var(--surface-sunk);
+}
+
+.card__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .card__body {
   padding: 0 var(--sp-4) var(--sp-3);
   font-size: var(--t-md);
@@ -1617,6 +1640,33 @@ button {
   .workspace {
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
     gap: var(--sp-3);
+  }
+}
+
+/* Tablet, where the card sits under the map and runs the whole width
+   of the screen. Letting the picture fill that width gave a 687px band
+   only 220px tall — a 3:1 strip. It is capped at 560px and centred
+   instead, so it keeps a true 16:9 shape at a size that suits the
+   room. Phones under 600px are narrow enough to fill. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .card__photo {
+    width: min(100%, 560px);
+    max-width: 560px;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    margin-inline: auto;
+    overflow: hidden;
+  }
+}
+
+/* Between 901 and 1180px the side panel narrows to 300px, and 16:9 of
+   the photograph's 251px would be 141px — a strip. The panel stays as
+   it is and the picture takes a clamped height instead, which fills
+   the same width more generously. */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .card__photo {
+    aspect-ratio: auto;
+    height: clamp(170px, 17vw, 200px);
   }
 }
 

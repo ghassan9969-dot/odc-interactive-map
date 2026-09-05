@@ -30,6 +30,21 @@ export function LocationCard({ location, routeShown, floorHint, onRoute }: Props
         </div>
       </div>
 
+      {/* Between the header and the description, so the restriction
+          notice still follows the text immediately. Nothing is drawn
+          at all for a destination without a photograph. */}
+      {location.image && (
+        <figure className="card__photo">
+          <img
+            src={location.image}
+            alt={location.imageAlt ?? ''}
+            loading="lazy"
+            decoding="async"
+            style={location.imagePosition ? { objectPosition: location.imagePosition } : undefined}
+          />
+        </figure>
+      )}
+
       <p className="card__body">{location.description}</p>
 
       {location.restricted && (

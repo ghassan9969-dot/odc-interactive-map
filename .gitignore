@@ -8,3 +8,7 @@ dist
 # The logo and campus photo used by the site live in src/assets/ instead.
 *.pdf
 WhatsApp Image*.jpeg
+
+# Originals of the location photographs. Only the processed WebP in
+# src/assets/locations/ belongs in the repository.
+photos-src/

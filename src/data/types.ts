@@ -97,6 +97,16 @@ export interface Location {
    */
   mapLabel?: string
   /**
+   * A photograph of the room, imported through Vite so the built site
+   * gets a hashed URL that works under the Pages sub-path. Optional:
+   * a destination without one shows no image area at all.
+   */
+  image?: string
+  /** What the photograph shows. Required whenever `image` is set. */
+  imageAlt?: string
+  /** `object-position` for the crop, e.g. 'center 55%'. */
+  imagePosition?: string
+  /**
    * Replaces the measured distance and the turn list on the route
    * panel. The car park sits outside the surveyed plan, so quoting
    * metres to it would be inventing precision the drawing lacks.
