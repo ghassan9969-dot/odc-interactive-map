@@ -1209,74 +1209,254 @@ button {
 /* Route instructions                                                */
 /* ---------------------------------------------------------------- */
 
-.route-bar {
+.route {
   margin: 0 var(--sp-3) var(--sp-3);
   background: var(--accent-tint);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-md);
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) 0;
   animation: card-in 0.22s var(--ease);
 }
 
-.route-bar__head {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  color: var(--accent-strong);
-  text-transform: uppercase;
-  letter-spacing: var(--track-caps);
-}
-
-.route-bar__from {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--t-sm);
-  color: var(--ink-3);
-}
-
-.route-bar__from strong {
-  color: var(--ink);
-}
-
-/* The steps hang off a single rail, so the walk reads as one thread. */
-.route-bar__steps {
-  margin: 10px 0 0;
-  padding: 0 0 0 10px;
-  list-style: none;
-  font-size: var(--t-md);
-  color: var(--ink);
-  border-left: 2px solid var(--accent-line);
-}
-
-.route-step {
+/* Heading: the destination the walk actually reaches, and — where the
+   visitor was redirected — the room they asked for underneath it. */
+.route__head {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
-  padding: 5px 0;
-  position: relative;
 }
 
-.route-step__icon {
+.route__badge {
   flex: 0 0 auto;
-  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: var(--e-1);
+}
+
+.route__headings {
+  min-width: 0;
+}
+
+.route__title {
+  margin: 2px 0 0;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.route__subtitle {
+  margin: 2px 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-3);
+  line-height: 1.35;
+}
+
+/* Summary chips. Distance and time appear only where the drawing
+   supports them; the car park gets an honest "Outdoor route" instead. */
+.route__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--accent-line);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.route-fact svg {
   color: var(--accent-strong);
 }
 
-.route-step--start .route-step__icon,
+.route-fact--floor,
+.route-fact--arrive {
+  background: var(--brand-tint);
+  border-color: var(--brand-line);
+  color: var(--brand-ink);
+}
+
+.route-fact--floor svg,
+.route-fact--arrive svg {
+  color: var(--brand);
+}
+
+/* Progress across a journey that changes floor. Both walking stages
+   are always listed, so the visitor can see what follows this one. */
+.route__stages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2);
+  list-style: none;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--accent-line);
+}
+
+.route-stage {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink-4);
+}
+
+/* The connector between stages. It is the part that gives up room
+   when the panel is narrow, so no floor name is ever shortened. */
+.route-stage + .route-stage::before {
+  content: '';
+  flex: 0 1 12px;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line-strong);
+  margin-right: 1px;
+}
+
+.route-stage__dot {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  color: var(--ink-4);
+}
+
+.route-stage__label {
+  white-space: nowrap;
+}
+
+.route-stage.is-done {
+  color: var(--brand-ink);
+}
+
+.route-stage.is-done .route-stage__dot {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-strong);
+}
+
+.route-stage.is-done + .route-stage::before,
+.route-stage.is-active + .route-stage::before {
+  background: var(--brand-line);
+}
+
+.route-stage.is-active {
+  color: var(--accent-strong);
+}
+
+.route-stage.is-active .route-stage__dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: var(--ring-accent);
+}
+
+/* The turns, as a numbered timeline on a single quiet rail. */
+.route__steps {
+  position: relative;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-md);
+  color: var(--ink);
+}
+
+.route__steps::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent-line);
+}
+
+.route-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 18px 1fr;
+  align-items: start;
+  gap: var(--sp-2);
+  padding: 5px 0;
+}
+
+.route-step__marker {
+  grid-column: 1;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  border: 1.5px solid var(--accent-line);
+  color: var(--accent-strong);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.route-step__icon {
+  grid-column: 2;
+  margin-top: 4px;
+  color: var(--ink-3);
+}
+
+.route-step__text {
+  grid-column: 3;
+  padding-top: 2px;
+  line-height: 1.4;
+}
+
+/* The arrival is the point of the whole list, so it is the one line
+   painted in the destination colour rather than the route's orange. */
+.route-step--arrive .route-step__marker {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-ink);
+}
+
 .route-step--arrive .route-step__icon {
   color: var(--brand);
 }
 
-.route-step--arrive {
+.route-step--arrive .route-step__text {
   font-weight: 600;
+  color: var(--brand-ink);
 }
 
-.route-bar__note {
+.route__note {
   display: flex;
   gap: var(--sp-2);
   align-items: flex-start;
-  margin: 10px 0 0;
+  margin: var(--sp-3) 0 0;
   padding: 10px var(--sp-3);
   border-radius: var(--r-sm);
   background: rgba(255, 255, 255, 0.75);
@@ -1285,19 +1465,43 @@ button {
   line-height: 1.45;
 }
 
-.route-bar__note svg {
+.route__note svg {
   color: var(--brand);
   flex: 0 0 auto;
   margin-top: 1px;
 }
 
-.route-bar__actions {
-  margin-top: var(--sp-3);
-  display: grid;
-  gap: 6px;
+/* Restricted destinations: the walk stops at a desk, and the panel
+   says so again where the visitor is looking at the last instruction. */
+.route__check {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin: var(--sp-3) 0 0;
+  padding: 9px var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.route-bar__actions .btn {
+.route__check svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.route__actions {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) 0;
+  background: var(--accent-tint);
+}
+
+.route__actions .btn {
   width: 100%;
   min-height: 46px;
   padding: var(--sp-2) var(--sp-3);
@@ -1306,8 +1510,32 @@ button {
   line-height: 1.25;
 }
 
-.route-bar__actions .btn--ghost {
+.route__actions .btn--ghost {
   background: rgba(255, 255, 255, 0.8);
+}
+
+/* Side-by-side layout: the panel scrolls, so the actions ride along
+   its bottom edge and Continue can never be scrolled out of reach.
+   Below 900px the document is the only scroller and nothing sticks. */
+@media (min-width: 901px) {
+  .route__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: var(--sp-2);
+    box-shadow: 0 -8px 12px -8px rgba(16, 48, 58, 0.18);
+  }
+
+  .route__actions::before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: var(--accent-line);
+  }
 }
 
 /* ---------------------------------------------------------------- */
