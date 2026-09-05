@@ -34,6 +34,9 @@ export function RouteInstructions({ journey, legIndex, onGoToLeg, onHide }: Prop
 
   const distance = Math.round(leg.route.length / UNITS_PER_METRE)
   const minutes = walkingMinutes(leg.route.length)
+  // Somewhere the surveyed plan does not cover, so there is no
+  // honest distance to quote and no turn list worth printing.
+  const note = journey.target.routeNote
 
   return (
     <section className="route-bar" aria-label={`Walking directions to ${journey.target.name}`}>
@@ -43,23 +46,33 @@ export function RouteInstructions({ journey, legIndex, onGoToLeg, onHide }: Prop
       </p>
 
       <p className="route-bar__from">
-        <strong>{FLOOR_BY_ID[leg.floor].name}</strong> · from {leg.route.originLabel} · about{' '}
-        {distance} m
-        <span aria-hidden="true"> · </span>
-        <Footprints size={13} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> {minutes} min
+        <strong>{FLOOR_BY_ID[leg.floor].name}</strong> · from {leg.route.originLabel}
+        {!note && (
+          <>
+            {' '}· about {distance} m<span aria-hidden="true"> · </span>
+            <Footprints size={13} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> {minutes} min
+          </>
+        )}
       </p>
 
-      <ol className="route-bar__steps">
-        {leg.route.steps.map((step, i) => {
-          const Icon = STEP_ICON[step.kind]
-          return (
-            <li key={i} className={`route-step route-step--${step.kind}`}>
-              <Icon size={15} aria-hidden="true" className="route-step__icon" />
-              <span>{step.text}</span>
-            </li>
-          )
-        })}
-      </ol>
+      {note ? (
+        <p className="route-bar__note">
+          <MapPin size={15} aria-hidden="true" />
+          <span>{note}</span>
+        </p>
+      ) : (
+        <ol className="route-bar__steps">
+          {leg.route.steps.map((step, i) => {
+            const Icon = STEP_ICON[step.kind]
+            return (
+              <li key={i} className={`route-step route-step--${step.kind}`}>
+                <Icon size={15} aria-hidden="true" className="route-step__icon" />
+                <span>{step.text}</span>
+              </li>
+            )
+          })}
+        </ol>
+      )}
 
       <div className="route-bar__actions">
         {next && (

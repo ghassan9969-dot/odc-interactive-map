@@ -131,7 +131,10 @@ export const FLOORS: FloorDefinition[] = [
     name: 'Ground Floor',
     shortName: 'Ground',
     level: 'G',
-    width: 1830,
+    // Just wide enough for the car park and its access road. Held
+    // under 2297 so a 1440-wide desktop is still height-limited and
+    // the plan draws at exactly the size it did before the park.
+    width: 2260,
     height: 1520,
     outline: GROUND_OUTLINE,
     northAngle: 21,

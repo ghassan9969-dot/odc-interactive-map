@@ -21,6 +21,25 @@ import { g, rect, poly, w, wRect } from './geometry'
 
 const F = 'ground' as const
 
+/**
+ * The car park, east of the building across a clear margin.
+ *
+ * Declared here rather than in the drawing so the plot, its gates and
+ * the walk to it are all built from the same numbers.
+ */
+export const PARKING = {
+  x0: 1946,
+  y0: 550,
+  x1: 2296,
+  y1: 1468,
+  /** Where a car turns in, near the top of the road side. */
+  gateInY: 630,
+  /** Where it leaves again, near the foot of the same side. */
+  gateOutY: 1372,
+  /** Centre of the access road running down the east side. */
+  roadX: 2338,
+} as const
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
@@ -251,6 +270,18 @@ export const groundCirculation: CirculationArea[] = [
   // The mixed common room is one large open student area; the walk to
   // the female common room crosses it, exactly as the plan intends.
   { id: 'g-circ-smcr', floor: F, polys: [rect(g, 1660, 1396, 1904, 1490)] },
+  // Outside the building: the walk from the student / staff entrance
+  // along the south side and up the east side to the car park gate.
+  // The first leg overlaps the lobby inside so the two join up.
+  {
+    id: 'g-circ-park-road',
+    floor: F,
+    polys: [
+      rect(g, 1544, 1450, 1596, 1560),
+      rect(g, 1544, 1500, 2360, 1560),
+      rect(g, 2316, 600, 2360, 1560),
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -1016,6 +1047,28 @@ export const groundLocations: Location[] = [
     primary: false,
   },
 
+  /* --- Car park --------------------------------------------------- */
+  // East of the building, across a clear margin. The walk ends at the
+  // gate on its road side rather than somewhere in the middle of it.
+  {
+    id: 'g-parking',
+    name: 'Oman Dental College Parking',
+    shortName: 'Parking',
+    floor: F,
+    category: 'secondary',
+    description:
+      'Visitor parking located behind Oman Dental College, with clearly marked entrance and exit points.',
+    icon: 'parking',
+    mapLabel: 'Parking',
+    shape: { polys: [rect(g, PARKING.x0, PARKING.y0, PARKING.x1, PARKING.y1)] },
+    label: g(2121, 1000),
+    labelSize: 40,
+    door: g(PARKING.x1, PARKING.gateInY),
+    entryNode: 'park_gate',
+    routeNote: 'Follow the outdoor access path to the Parking Entrance.',
+    keywords: ['parking', 'car park', 'cars', 'vehicle', 'park', 'carpark'],
+    primary: true,
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -1203,6 +1256,12 @@ export const groundNodes: Record<string, Pt> = {
   smcr_w: g(1700, 1444),
   smcr_e: g(1860, 1444),
 
+  /* The outdoor walk to the car park, east of the building */
+  park_road_n: g(1570, 1466),
+  park_road_s: g(1570, 1530),
+  park_road_e: g(2338, 1530),
+  park_gate: g(2338, 630),
+
   /* Angled wing corridors */
   wing_w_exit: w(161, 44),
   wing_n_0: w(161, 96),
@@ -1306,6 +1365,10 @@ export const groundEdges: [string, string][] = [
   /* East core */
   ['sc_e', 'ss_lobby'],
   ['ss_lobby', 'ent_staff'],
+  ['ss_lobby', 'park_road_n'],
+  ['park_road_n', 'park_road_s'],
+  ['park_road_s', 'park_road_e'],
+  ['park_road_e', 'park_gate'],
   ['ss_lobby', 'ss_lobby_e'],
   ['ss_lobby', 'e_stair_s'],
   ['ss_lobby', 'men_lobby'],
