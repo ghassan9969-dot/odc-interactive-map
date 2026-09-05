@@ -351,7 +351,7 @@ export function buildJourney(target: Location): Journey | null {
     target,
     legs: [
       { floor: 'ground', route: toLifts, title: 'Go to the lifts' },
-      { floor: target.floor, route: fromLifts, title: target.name },
+      { floor: end.floor, route: fromLifts, title: end.name },
     ],
   }
 }

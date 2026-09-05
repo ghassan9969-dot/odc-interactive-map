@@ -305,6 +305,11 @@ export function FloorMap({
                   <circle key={`${space.id}-d${i}`} cx={d[0]} cy={d[1]} r={6} className="map__door" />
                 )),
               )}
+              {circulation.flatMap((c) =>
+                (c.doorMarks ?? []).map((d, i) => (
+                  <circle key={`${c.id}-d${i}`} cx={d[0]} cy={d[1]} r={6} className="map__door" />
+                )),
+              )}
             </g>
 
             {/* --- navigation route ------------------------------- */}

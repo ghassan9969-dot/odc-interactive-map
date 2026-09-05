@@ -98,12 +98,25 @@ describe('acceptance routes', () => {
     expect(journey.legs[1].route.originLabel).toBe('Lift Lobby (L1 & L2)')
   })
 
-  it('Student Affairs goes to the lifts, then across the Second Floor', () => {
+  // The college admits visitors no further than the desk on the Second
+  // Floor, so the walk stops there however far in the room itself is.
+  it('walks a Second Floor visitor only as far as the Administration Reception', () => {
     const journey = buildJourney(byId('s-student-affairs'))!
+    expect(journey.target.name).toBe('Student Affairs')
     expect(journey.legs.map((l) => l.floor)).toEqual(['ground', 'second'])
     expect(journey.legs[0].route.destLabel).toContain('L1 & L2')
-    expect(journey.legs[1].route.destLabel).toBe('Student Affairs')
+    expect(journey.legs[1].route.destLabel).toBe('Administration Reception')
+    expect(journey.legs[1].title).toBe('Administration Reception')
     expect(journey.legs[1].route.originLabel).toBe('Lift Lobby (L1 & L2)')
+  })
+
+  it('leaves the reception the only open destination on the Second Floor', () => {
+    const second = LOCATIONS.filter((l) => l.floor === 'second')
+    const open = second.filter((l) => l.category !== 'circulation' && !l.restricted)
+    expect(open.map((l) => l.id)).toEqual(['s-reception'])
+    for (const l of second.filter((l) => l.restricted)) {
+      expect(routeTarget(l).id, `${l.id} is sent to the desk`).toBe('s-reception')
+    }
   })
 
   it('sends Library and Student Affairs to the lifts by the same ground floor walk', () => {
