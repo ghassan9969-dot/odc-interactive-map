@@ -1691,11 +1691,22 @@ button {
     min-height: 400px;
     flex: 0 0 auto;
   }
+  /* One scrollbar on a stacked screen, and it belongs to the document.
+     Nothing inside the panel keeps a scroller of its own: a card that
+     scrolls inside a page that also scrolls is miserable on a touch
+     screen, and it can leave the destination's name off the top of
+     its own box. The list and the card grow to their content instead.
+     The search dropdown is left alone; it is a popover, not the page. */
   .dest-list {
-    max-height: 420px;
+    max-height: none;
+    overflow: visible;
+  }
+  .dest-list__scroll {
+    overflow: visible;
   }
   .panel__details {
-    max-height: 520px;
+    max-height: none;
+    overflow: visible;
   }
   /* Stacked layout: a collapsed panel becomes a slim horizontal bar. */
   .panel.is-collapsed {
