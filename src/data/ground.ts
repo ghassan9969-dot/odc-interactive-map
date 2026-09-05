@@ -18,6 +18,13 @@
 
 import type { CirculationArea, Location, SecondarySpace, Pt } from './types'
 import { g, rect, poly, w, wRect } from './geometry'
+// Imported rather than referenced by path, so the built site gets
+// hashed URLs that work under the Pages sub-path.
+import canteenPhoto from '../assets/locations/canteen-restaurant.webp'
+import parkingPhoto from '../assets/locations/oman-dental-college-parking.webp'
+import pgClinicPhoto from '../assets/locations/postgraduate-clinic.webp'
+import studentsCommonPhoto from '../assets/locations/students-mixed-common-room.webp'
+import ucClinicPhoto from '../assets/locations/undergraduate-clinic.webp'
 
 const F = 'ground' as const
 
@@ -79,7 +86,7 @@ interface Bank {
   cols: 1 | 2
 }
 
-const UC_BANKS: Bank[] = [
+export const UC_BANKS: Bank[] = [
   { x0: 510, x1: 596, cols: 2 },
   { x0: 624, x1: 710, cols: 2 },
   { x0: 737, x1: 823, cols: 2 },
@@ -94,10 +101,10 @@ const UC_BANKS: Bank[] = [
 
 /** The core the two middle singles sit either side of. */
 const UC_CORE = { x0: 1008, x1: 1068 }
-const UC_TOP = 1123
-const UC_BOTTOM = 1432
+export const UC_TOP = 1123
+export const UC_BOTTOM = 1432
 /** Seven rows of chairs, from the `3X3` tag rows in the drawing. */
-const UC_ROWS = 7
+export const UC_ROWS = 7
 
 /** Every bank as a polygon, used for drawing and for the access tests. */
 export const ucBankPolys: Pt[][] = UC_BANKS.map((b) => rect(g, b.x0, UC_TOP, b.x1, UC_BOTTOM))
@@ -120,13 +127,13 @@ const UC_AISLES = UC_BANKS.slice(0, -1)
  */
 const PG_HALF = 28.5
 
-interface PgRow {
+export interface PgRow {
   b0: number
   b1: number
   a: number[]
 }
 
-const PG_ROWS: PgRow[] = [
+export const PG_ROWS: PgRow[] = [
   // Eleven spaces along the top row. The third from the west carries no
   // cabinet tag on the sheet — it is the Head of Clinic Office, and the
   // college's marked-up reference puts the office exactly there.
@@ -137,7 +144,7 @@ const PG_ROWS: PgRow[] = [
 ]
 
 /** The Head of Clinic Office: third space from the western end, top row. */
-const HOC_A = PG_ROWS[0].a[2]
+export const HOC_A = PG_ROWS[0].a[2]
 
 /** The short unfitted run between the last treatment room and the toilets. */
 const PG_TAIL = { a0: 777.5, a1: 826 }
@@ -146,13 +153,21 @@ const PG_TAIL = { a0: 777.5, a1: 826 }
 const PG_EXIT = { a0: 150, a1: 172 }
 
 /**
- * One treatment space. The first space of the top row is cut back to
- * its east half, because the exit lobby beside the laboratory takes
- * the rest of that bay.
+ * One treatment space, in the wing's own coordinates. The first space
+ * of the top row is cut back to its east half, because the exit lobby
+ * beside the laboratory takes the rest of that bay. Everything that
+ * needs a bay rectangle reads it from here, so nothing can drift.
  */
+export const pgBayLocal = (a: number, row: PgRow) => ({
+  a0: row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF,
+  a1: a + PG_HALF,
+  b0: row.b0,
+  b1: row.b1,
+})
+
 const pgUnit = (a: number, row: PgRow): Pt[] => {
-  const west = row.b0 === PG_ROWS[0].b0 && a === PG_ROWS[0].a[0] ? PG_EXIT.a1 : a - PG_HALF
-  return wRect(west, row.b0, a + PG_HALF, row.b1)
+  const r = pgBayLocal(a, row)
+  return wRect(r.a0, r.b0, r.a1, r.b1)
 }
 
 /** All 40 postgraduate spaces, less the one given over to the office. */
@@ -295,6 +310,14 @@ const UC_RESTRICTED = {
   routeVia: 'g-uc-reception',
 } as const
 
+/** The postgraduate wing is controlled the same way, from its own desk. */
+const PG_RESTRICTED = {
+  title: 'Restricted Clinical Area',
+  message:
+    'Please check in at PC Reception. Protective clothing and staff permission are required before entering.',
+  routeVia: 'g-pc-reception',
+} as const
+
 export const groundLocations: Location[] = [
   /* --- Entrances and exits --------------------------------------- */
   {
@@ -372,6 +395,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-uc-reception',
     name: 'UC Reception',
+    tone: 'uc-soft' as const,
     shortName: 'UC Reception',
     floor: F,
     category: 'reception',
@@ -392,6 +416,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pc-reception',
     name: 'PC Reception',
+    tone: 'pg-soft' as const,
     shortName: 'PC Reception',
     floor: F,
     category: 'reception',
@@ -411,12 +436,16 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pg-clinic',
     name: 'Postgraduate Clinic',
+    tone: 'pg' as const,
     shortName: 'PG Clinic',
     floor: F,
     category: 'clinical',
     description:
       'Specialist treatment wing with 39 clinical treatment rooms, arranged in four rows around a central waiting area.',
     icon: 'clinic',
+    image: pgClinicPhoto,
+    imageAlt: 'Dental treatment room in the Postgraduate Clinic',
+    imagePosition: '60% center',
     shape: {
       polys: pgTreatmentPolys,
       dividers: PG_ROWS.flatMap(pgRowDividers),
@@ -428,6 +457,7 @@ export const groundLocations: Location[] = [
     entryNode: 'wing_n_4',
     keywords: ['consultation rooms', 'postgraduate', 'specialist', 'pg clinic', 'dental'],
     primary: true,
+    restricted: PG_RESTRICTED,
   },
   {
     id: 'g-pg-hoc',
@@ -450,6 +480,7 @@ export const groundLocations: Location[] = [
   {
     id: 'g-pg-waiting',
     name: 'Postgraduate Clinic Waiting Area',
+    tone: 'pg' as const,
     shortName: 'PG Waiting Area',
     floor: F,
     category: 'clinical',
@@ -549,6 +580,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-uc-clinic',
+    tone: 'uc' as const,
     name: 'Undergraduate Clinic',
     shortName: 'UG Clinic',
     floor: F,
@@ -556,6 +588,9 @@ export const groundLocations: Location[] = [
     description:
       'The main clinical teaching and patient treatment area, with student chair banks either side of the central Stair 02 core.',
     icon: 'clinic',
+    image: ucClinicPhoto,
+    imageAlt: 'Undergraduate Clinic at Oman Dental College',
+    imagePosition: 'center 55%',
     shape: {
       polys: ucBankPolys,
       dividers: UC_BANKS.flatMap((b) =>
@@ -567,7 +602,6 @@ export const groundLocations: Location[] = [
     label: g(776, 1101),
     labelSize: 26,
     door: g(508, 1224),
-    doorMarks: [g(508, 1224)],
     entryNode: 'uc_gate',
     keywords: ['undergraduate', 'student clinic', 'dental chairs', 'treatment', 'cabinets'],
     primary: true,
@@ -748,6 +782,9 @@ export const groundLocations: Location[] = [
     category: 'food',
     description: 'Main dining hall serving hot meals for students and staff.',
     icon: 'restaurant',
+    image: canteenPhoto,
+    imageAlt: 'Cafeteria seating area at Oman Dental College',
+    imagePosition: 'center 62%',
     shape: {
       polys: [rect(g, 1694, 1100, 1790, 1390)],
       dividers: [
@@ -766,6 +803,7 @@ export const groundLocations: Location[] = [
   /* --- Vertical circulation -------------------------------------- */
   {
     id: 'g-lift-12',
+    tone: 'lift' as const,
     name: 'Lifts L1 & L2',
     shortName: 'Lifts L1 / L2',
     floor: F,
@@ -782,6 +820,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-01',
+    tone: 'stair' as const,
     name: 'Stair 01',
     shortName: 'Stair 01',
     floor: F,
@@ -800,6 +839,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-lift-34',
+    tone: 'lift' as const,
     name: 'Lifts L3 & L4',
     shortName: 'Lifts L3 / L4',
     floor: F,
@@ -817,6 +857,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-02',
+    tone: 'stair' as const,
     name: 'Stair 02',
     shortName: 'Stair 02',
     floor: F,
@@ -833,6 +874,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-stair-03',
+    tone: 'stair' as const,
     name: 'Stair 03',
     shortName: 'Stair 03',
     floor: F,
@@ -877,6 +919,9 @@ export const groundLocations: Location[] = [
     description:
       'The large shared student common room across the south-east of the building, opening onto the student and staff lobby.',
     icon: 'students',
+    image: studentsCommonPhoto,
+    imageAlt: 'Foosball table in the Students Mixed Common Room',
+    imagePosition: 'center 60%',
     // Extends the whole way across the lower area to the female
     // students common room, as confirmed by the college.
     shape: { polys: [rect(g, 1660, 1396, 1904, 1490)] },
@@ -975,6 +1020,7 @@ export const groundLocations: Location[] = [
   /* --- Prayer rooms, west ---------------------------------------- */
   {
     id: 'g-prayer-w-f',
+    tone: 'prayer' as const,
     name: "Women's Prayer Room",
     shortName: "Women's Prayer",
     floor: F,
@@ -992,6 +1038,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-prayer-w-m',
+    tone: 'prayer' as const,
     name: "Men's Prayer Room",
     shortName: "Men's Prayer",
     floor: F,
@@ -1031,6 +1078,7 @@ export const groundLocations: Location[] = [
   },
   {
     id: 'g-prayer-e-m',
+    tone: 'prayer' as const,
     name: "Men's Prayer Room (East)",
     shortName: "Men's Prayer",
     floor: F,
@@ -1059,6 +1107,9 @@ export const groundLocations: Location[] = [
     description:
       'Visitor parking located behind Oman Dental College, with clearly marked entrance and exit points.',
     icon: 'parking',
+    image: parkingPhoto,
+    imageAlt: 'Aerial view of Oman Dental College visitor parking',
+    imagePosition: 'center',
     mapLabel: 'Parking',
     shape: { polys: [rect(g, PARKING.x0, PARKING.y0, PARKING.x1, PARKING.y1)] },
     label: g(2121, 1000),
@@ -1092,6 +1143,7 @@ export const groundSecondary: SecondarySpace[] = [
   /* --- Postgraduate wing ----------------------------------------- */
   {
     id: 'g-s-wing-toiletm',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -1103,6 +1155,7 @@ export const groundSecondary: SecondarySpace[] = [
   },
   {
     id: 'g-s-wing-toiletf',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',
@@ -1147,6 +1200,7 @@ export const groundSecondary: SecondarySpace[] = [
   /* --- East core and lockers -------------------------------------- */
   {
     id: 'g-s-toilet-e-m',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',

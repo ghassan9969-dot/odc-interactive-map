@@ -1,4 +1,4 @@
-import type { CategoryMeta, CategoryId, FloorDefinition, Pt } from './types'
+import type { CategoryMeta, CategoryId, FloorDefinition, Location, Pt, ZoneToneId } from './types'
 import { g, f1, f2, poly } from './geometry'
 
 /* ------------------------------------------------------------------ */
@@ -15,6 +15,84 @@ export const PALETTE = {
   route: '#E4761B',
   text: '#26414B',
   textMuted: '#5D7681',
+}
+
+/* ------------------------------------------------------------------ */
+/* Clinical zone identity                                              */
+/*                                                                     */
+/* The two clinical teams wear different uniforms — navy in the        */
+/* postgraduate clinic, marine blue in the undergraduate one — and the */
+/* college asked the plan to carry the same identity. A tone sits over */
+/* the category colours for the rooms that belong to a zone; the       */
+/* category itself, and everything the room does, is unchanged.        */
+/*                                                                     */
+/* Border and pictogram take the uniform colour as given. Marine blue  */
+/* is only a 3.3:1 contrast on its own tint, which large type just     */
+/* clears but small labels do not, so the text darkens one step to     */
+/* 5.1:1 and stays in the same hue.                                    */
+/* ------------------------------------------------------------------ */
+
+export interface ZoneTone {
+  fill: string
+  stroke: string
+  /** The room pictogram, in the uniform colour. */
+  icon: string
+  /** The room name, darkened where the uniform colour would not carry it. */
+  text: string
+}
+
+export const ZONE_TONES: Record<ZoneToneId, ZoneTone> = {
+  pg: { fill: '#DCE7F4', stroke: '#234E70', icon: '#234E70', text: '#234E70' },
+  'pg-soft': { fill: '#EBF1F8', stroke: '#7A99B7', icon: '#234E70', text: '#234E70' },
+  uc: { fill: '#DDF4FA', stroke: '#168FB3', icon: '#168FB3', text: '#0F6E8A' },
+  'uc-soft': { fill: '#EDF9FC', stroke: '#7FC4D7', icon: '#168FB3', text: '#0F6E8A' },
+  // Vertical circulation, told apart from the rooms and from each
+  // other. Names darken out of the border colour, which carries only
+  // 4.2:1 and 3.3:1 on its own tint, to 7.7:1 and 6.4:1.
+  lift: { fill: '#EEEAF8', stroke: '#7466A8', icon: '#7466A8', text: '#4A3F73' },
+  stair: { fill: '#E3F2EC', stroke: '#4F8F78', icon: '#4F8F78', text: '#2F5D4C' },
+  // The quiet facilities. Warm sand for prayer, cool water for the
+  // toilets, both paler than any clinic, food area or selection, so a
+  // visitor scanning for a destination looks straight past them. The
+  // men's and women's rooms share a colour and are told apart by the
+  // name on the plan, never by the tint.
+  prayer: { fill: '#F6F0E3', stroke: '#B08A4A', icon: '#B08A4A', text: '#654B21' },
+  toilet: { fill: '#E8F1F5', stroke: '#6F98AA', icon: '#6F98AA', text: '#365E70' },
+}
+
+/** The lifts and stairs, keyed together as one way of moving between floors. */
+export const VERTICAL_ZONES: { tone: ZoneToneId; label: string }[] = [
+  { tone: 'lift', label: 'Lifts' },
+  { tone: 'stair', label: 'Stairs' },
+]
+
+/** Prayer rooms and toilets, keyed together as the quiet facilities. */
+export const FACILITY_ZONES: { tone: ZoneToneId; label: string }[] = [
+  { tone: 'prayer', label: 'Prayer Rooms' },
+  { tone: 'toilet', label: 'Toilets' },
+]
+
+/** The small key that tells the two clinics apart, beside the legend. */
+export const CLINIC_ZONES: { tone: ZoneToneId; label: string }[] = [
+  { tone: 'pg', label: 'Postgraduate Clinic' },
+  { tone: 'uc', label: 'Undergraduate Clinic' },
+]
+
+/**
+ * What a room is painted in: its zone tone where it has one, its
+ * category otherwise. One lookup so the plan, the list, the search
+ * results and the card never disagree.
+ */
+export function roomPaint(location: Pick<Location, 'category' | 'tone'>) {
+  const cat = CATEGORIES[location.category]
+  const zone = location.tone ? ZONE_TONES[location.tone] : null
+  return {
+    fill: zone ? zone.fill : cat.fill,
+    stroke: zone ? zone.stroke : cat.stroke,
+    icon: zone ? zone.icon : cat.text,
+    text: zone ? zone.text : cat.text,
+    label: cat.label,
+  }
 }
 
 export const CATEGORIES: Record<CategoryId, CategoryMeta> = {

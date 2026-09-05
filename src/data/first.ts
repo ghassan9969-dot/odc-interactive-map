@@ -10,6 +10,13 @@
 
 import type { CirculationArea, Location, SecondarySpace, Pt } from './types'
 import { f1, poly, rect } from './geometry'
+// Imported rather than referenced by path, so the built site gets
+// hashed URLs that work under the Pages sub-path. The four lecture
+// rooms share one photograph and one import.
+import cslPhoto from '../assets/locations/csl.webp'
+import lectureRoomsPhoto from '../assets/locations/lecture-rooms.webp'
+import libraryPhoto from '../assets/locations/library.webp'
+import multimediaPhoto from '../assets/locations/multimedia-room.webp'
 
 const F = 'first' as const
 
@@ -89,6 +96,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Study and academic resource space for students and faculty.',
     icon: 'library',
+    image: libraryPhoto,
+    imageAlt: 'Library and study area at Oman Dental College',
+    imagePosition: 'center 65%',
     shape: { polys: [rect(f1, 133, NORTH, 336, 1216)] },
     label: f1(234, 1095),
     labelSize: 24,
@@ -107,6 +117,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Computer and media room for coursework and digital learning.',
     icon: 'multimedia',
+    image: multimediaPhoto,
+    imageAlt: 'Computer workstations in the Multimedia Room',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 133, 1220, 336, 1386)] },
     label: f1(234, 1300),
     labelSize: 20,
@@ -253,6 +266,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Tiered lecture room for whole-cohort teaching.',
     icon: 'lecture',
+    image: lectureRoomsPhoto,
+    imageAlt: 'Lecture room at Oman Dental College',
+    imagePosition: 'center 68%',
     shape: { polys: [rect(f1, 1178, TOP, 1316, 1178)] },
     label: f1(1247, 1090),
     labelSize: 17,
@@ -270,6 +286,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Tiered lecture room for whole-cohort teaching.',
     icon: 'lecture',
+    image: lectureRoomsPhoto,
+    imageAlt: 'Lecture room at Oman Dental College',
+    imagePosition: 'center 68%',
     shape: { polys: [rect(f1, 1320, TOP, 1459, 1178)] },
     label: f1(1390, 1090),
     labelSize: 17,
@@ -287,6 +306,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Tiered lecture room for whole-cohort teaching.',
     icon: 'lecture',
+    image: lectureRoomsPhoto,
+    imageAlt: 'Lecture room at Oman Dental College',
+    imagePosition: 'center 68%',
     shape: { polys: [rect(f1, 1178, 1182, 1316, BOT)] },
     label: f1(1247, 1268),
     labelSize: 17,
@@ -304,6 +326,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Tiered lecture room for whole-cohort teaching.',
     icon: 'lecture',
+    image: lectureRoomsPhoto,
+    imageAlt: 'Lecture room at Oman Dental College',
+    imagePosition: 'center 68%',
     shape: { polys: [rect(f1, 1320, 1182, 1459, BOT)] },
     label: f1(1390, 1268),
     labelSize: 17,
@@ -356,6 +381,9 @@ export const firstLocations: Location[] = [
     description:
       'Clinical Simulation Laboratory - ninety-six simulation units where students practise before treating patients.',
     icon: 'simulation',
+    image: cslPhoto,
+    imageAlt: 'Clinical Skills Laboratory at Oman Dental College',
+    imagePosition: 'center 55%',
     // Runs all the way down to the prosthodontic lab. Only the strip
     // above the plaster room stops short, at that room's north wall.
     shape: {
@@ -404,6 +432,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-lift-12',
+    tone: 'lift' as const,
     name: 'Lifts L1 & L2',
     shortName: 'Lifts L1 / L2',
     floor: F,
@@ -420,6 +449,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-01',
+    tone: 'stair' as const,
     name: 'Stair 01',
     shortName: 'Stair 01',
     floor: F,
@@ -437,6 +467,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-02',
+    tone: 'stair' as const,
     name: 'Stair 02',
     shortName: 'Stair 02',
     floor: F,
@@ -454,6 +485,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-lift-34',
+    tone: 'lift' as const,
     name: 'Lifts L3 & L4',
     shortName: 'Lifts L3 / L4',
     floor: F,
@@ -473,6 +505,7 @@ export const firstLocations: Location[] = [
   },
   {
     id: 'f-stair-03',
+    tone: 'stair' as const,
     name: 'Stair 03',
     shortName: 'Stair 03',
     floor: F,
@@ -497,6 +530,7 @@ export const firstLocations: Location[] = [
 export const firstSecondary: SecondarySpace[] = [
   {
     id: 'f-s-toilets-w1',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',
@@ -527,6 +561,7 @@ export const firstSecondary: SecondarySpace[] = [
   },
   {
     id: 'f-s-toilets-c',
+    tone: 'toilet' as const,
     name: 'Toilets M',
     floor: F,
     kind: 'toilet',
@@ -536,6 +571,7 @@ export const firstSecondary: SecondarySpace[] = [
   },
   {
     id: 'f-s-toilets-e1',
+    tone: 'toilet' as const,
     name: 'Toilets F',
     floor: F,
     kind: 'toilet',

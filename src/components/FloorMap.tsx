@@ -1,13 +1,14 @@
 import { useEffect, useMemo } from 'react'
-import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
+import { CATEGORIES, FLOOR_BY_ID, ZONE_TONES, roomPaint } from '../data/floors'
 import { boundsOf, toPath } from '../data/geometry'
 import { circulationOnFloor, locationsOnFloor, secondaryOnFloor } from '../data/locations'
 import { pathAsSvg, type Route } from '../data/routes'
-import type { FloorId, Location, Pt, SecondarySpace } from '../data/types'
+import type { FloorId, IconType, Location, Pt, SecondarySpace, ZoneToneId } from '../data/types'
 import { useMapTransform } from '../hooks/useMapTransform'
 import { MapIcon } from './MapIcon'
 import { MapControls } from './MapControls'
 import { GroundFloorDecor } from '../maps/GroundFloorMap'
+import { DentalUnitDefs, DentalUnits } from '../maps/DentalUnit'
 import { FirstFloorDecor } from '../maps/FirstFloorMap'
 import { SecondFloorDecor } from '../maps/SecondFloorMap'
 
@@ -40,24 +41,49 @@ function wrapLabel(name: string, maxChars: number): string[] {
 }
 
 /** Muted caption for a support space, wrapped to fit its room. */
-function SecondaryLabel({ space }: { space: SecondarySpace }) {
+/** The pictogram a toned support space carries, where it has one. */
+const SECONDARY_ICON: Partial<Record<ZoneToneId, IconType>> = { toilet: 'toilet' }
+
+function SecondaryLabel({
+  space,
+  color,
+  icon,
+}: {
+  space: SecondarySpace
+  color?: string
+  icon?: IconType
+}) {
   const size = space.labelSize ?? 13
   const box = boundsOf(space.shape.polys)
   const lines = wrapLabel(space.name, Math.max(6, Math.round(box.w / (size * 0.54))))
   const [lx, ly] = space.label!
+  // A pictogram only where the room can carry one above its name. The
+  // toilets are small rooms, and the name is what tells the men's from
+  // the women's, so the name never gives up its place to the symbol.
+  const showIcon = Boolean(icon) && box.h > size * 3.6 && box.w > size * 2.6
+  const iconSize = Math.min(size * 1.5, box.w * 0.42, box.h * 0.3)
+  const top = showIcon ? ly + size * 0.62 : ly - ((lines.length - 1) * size * 1.05) / 2
   return (
-    <text
-      x={lx}
-      y={ly - ((lines.length - 1) * size * 1.05) / 2}
-      className="map__secondary-label"
-      style={{ fontSize: size }}
-    >
-      {lines.map((line, i) => (
-        <tspan key={i} x={lx} dy={i === 0 ? 0 : size * 1.05}>
-          {line}
-        </tspan>
-      ))}
-    </text>
+    <>
+      {showIcon && (
+        <MapIcon
+          type={icon!}
+          x={lx}
+          y={ly - size * 0.95}
+          size={iconSize}
+          color={color}
+          opacity={0.85}
+          strokeWidth={1.8}
+        />
+      )}
+      <text x={lx} y={top} className="map__secondary-label" style={{ fontSize: size, fill: color }}>
+        {lines.map((line, i) => (
+          <tspan key={i} x={lx} dy={i === 0 ? 0 : size * 1.05}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    </>
   )
 }
 
@@ -137,6 +163,9 @@ export function FloorMap({
             <filter id="plan-shadow" x="-10%" y="-10%" width="130%" height="130%">
               <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#0c3c46" floodOpacity="0.16" />
             </filter>
+            {/* The treatment unit symbol, defined once for every bay
+                that draws one. */}
+            <DentalUnitDefs />
           </defs>
 
           <g ref={map.layerRef}>
@@ -164,13 +193,20 @@ export function FloorMap({
 
             {/* --- secondary spaces ------------------------------- */}
             <g>
-              {secondary.map((s) => (
+              {secondary.map((s) => {
+                // A support space that is really a lift or a stair takes
+                // the same wayfinding colour as the ones that are rooms.
+                const tone = s.tone ? ZONE_TONES[s.tone] : null
+                return (
                 <g key={s.id}>
                   {s.shape.polys.map((p, i) => (
                     <path
                       key={i}
                       d={toPath(p)}
                       className={`map__secondary map__secondary--${s.kind}`}
+                      // Inline, because the class rule would win over a
+                      // presentation attribute.
+                      style={tone ? { fill: tone.fill, stroke: tone.stroke } : undefined}
                     />
                   ))}
                   {s.shape.dividers?.map(([a, b], i) => (
@@ -184,15 +220,23 @@ export function FloorMap({
                       opacity={0.5}
                     />
                   ))}
-                  {s.name && s.label && <SecondaryLabel space={s} />}
+                  {s.name && s.label && (
+                    <SecondaryLabel
+                      space={s}
+                      color={tone?.text}
+                      icon={s.tone ? SECONDARY_ICON[s.tone] : undefined}
+                    />
+                  )}
                 </g>
-              ))}
+                )
+              })}
             </g>
 
             {/* --- destinations ----------------------------------- */}
             <g>
               {locations.map((loc) => {
                 const cat = CATEGORIES[loc.category]
+                const paint = roomPaint(loc)
                 const selected = loc.id === selectedId
                 const dimmed = selectedId !== null && !selected
                 const size = loc.labelSize ?? 18
@@ -211,8 +255,17 @@ export function FloorMap({
                 if (lines.some((l) => l.length > maxChars * 1.15)) {
                   lines = wrapLabel(loc.shortName, maxChars)
                 }
-                const showIcon = !upright && size >= 15 && box.h > size * 3
-                const iconSize = Math.min(size * 1.7, box.h * 0.42)
+                // A lift, a stair or a quiet facility must never be told
+                // apart by colour alone, so the pictogram is drawn even in
+                // the small rooms where the general rule would drop it.
+                const vertical = loc.tone === 'lift' || loc.tone === 'stair'
+                const quiet = loc.tone === 'prayer' || loc.tone === 'toilet'
+                const marked = vertical || quiet
+                const showIcon =
+                  !upright && box.h > size * (marked ? 2.4 : 3) && (marked || size >= 15)
+                const iconSize = marked
+                  ? Math.min(size * 1.6, box.h * 0.3, box.w * 0.55)
+                  : Math.min(size * 1.7, box.h * 0.42)
                 const textTop = showIcon ? loc.label[1] + size * 0.62 : loc.label[1] - ((lines.length - 1) * size) / 2
 
                 return (
@@ -241,8 +294,8 @@ export function FloorMap({
                         key={i}
                         d={toPath(p)}
                         className="room__shape"
-                        fill={selected ? cat.fill : cat.fill}
-                        stroke={selected ? '#E4761B' : cat.stroke}
+                        fill={paint.fill}
+                        stroke={selected ? '#E4761B' : paint.stroke}
                       />
                     ))}
                     {loc.shape.dividers?.map(([a, b], i) => (
@@ -255,6 +308,7 @@ export function FloorMap({
                         className="map__divider"
                       />
                     ))}
+                    <DentalUnits locationId={loc.id} />
                     {loc.shape.polys.map((p, i) => (
                       <path key={`f${i}`} d={toPath(p)} className="room__focus" fill="none" />
                     ))}
@@ -264,7 +318,7 @@ export function FloorMap({
                         x={loc.label[0]}
                         y={loc.label[1] - size * 0.95}
                         size={iconSize}
-                        color={cat.text}
+                        color={paint.icon}
                         opacity={0.9}
                         strokeWidth={2}
                       />
@@ -273,7 +327,7 @@ export function FloorMap({
                       x={loc.label[0]}
                       y={textTop}
                       className="room__label"
-                      fill={cat.text}
+                      fill={paint.text}
                       style={{ fontSize: size }}
                       transform={
                         upright ? `rotate(-90 ${loc.label[0]} ${loc.label[1]})` : undefined

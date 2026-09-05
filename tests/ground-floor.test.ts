@@ -417,7 +417,7 @@ describe('external exits', () => {
 /* H. Restricted clinical access                                       */
 /* ------------------------------------------------------------------ */
 
-describe('the restricted undergraduate clinic', () => {
+describe('the restricted clinics', () => {
   it('carries the warning the college asked for', () => {
     const r = byId('g-uc-clinic').restricted
     expect(r).toBeTruthy()
@@ -428,11 +428,27 @@ describe('the restricted undergraduate clinic', () => {
     expect(r!.routeVia).toBe('g-uc-reception')
   })
 
-  it('ends the walk at UC Reception rather than inside the clinic', () => {
-    const journey = buildJourney(byId('g-uc-clinic'))!
+  // The college controls the postgraduate wing the same way, from its
+  // own desk, so the same notice and the same redirect apply there.
+  it('carries the same warning on the postgraduate clinic', () => {
+    const r = byId('g-pg-clinic').restricted
+    expect(r).toBeTruthy()
+    expect(r!.title).toBe('Restricted Clinical Area')
+    expect(r!.message).toBe(
+      'Please check in at PC Reception. Protective clothing and staff permission are required before entering.',
+    )
+    expect(r!.routeVia).toBe('g-pc-reception')
+  })
+
+  it.each([
+    ['g-uc-clinic', 'g-uc-reception', 'UC Reception'],
+    ['g-pg-clinic', 'g-pc-reception', 'PC Reception'],
+  ])('ends the walk to %s at its desk rather than inside the clinic', (clinic, deskId, deskName) => {
+    const journey = buildJourney(byId(clinic))!
     const last = journey.legs[journey.legs.length - 1]
-    expect(last.title).toBe('UC Reception')
-    const desk = byId('g-uc-reception')
+    expect(journey.target.id).toBe(clinic)
+    expect(last.title).toBe(deskName)
+    const desk = byId(deskId)
     expect(Math.hypot(last.route.end[0] - desk.door[0], last.route.end[1] - desk.door[1])).toBeLessThan(1)
   })
 
@@ -651,12 +667,15 @@ describe('the routes the college marked up', () => {
     },
   )
 
-  it('walks north up the western side to the postgraduate clinic', () => {
+  // The postgraduate wing became a controlled area, so the marked-up
+  // walk north into it now stops at PC Reception on the way. What the
+  // reference cared about still holds: it keeps out of the clinic and
+  // student corridors, and it climbs above the south wing to get there.
+  it('walks north up the western side towards the postgraduate clinic', () => {
     const points = pts('g-pg-clinic')
     expect(usesCorridor(points, main), 'stays out of the clinic corridor').toBe(false)
     expect(usesCorridor(points, south), 'stays out of the south circulation').toBe(false)
-    // It ends up north of the whole south wing.
-    expect(Math.min(...points.map((p) => p[1]))).toBeLessThan(banks.y - 400)
+    expect(Math.min(...points.map((p) => p[1]))).toBeLessThan(banks.y)
   })
 
   it('reaches Stair 02 up from the student circulation', () => {

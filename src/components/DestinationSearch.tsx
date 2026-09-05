@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
+import { CATEGORIES, FLOOR_BY_ID, roomPaint } from '../data/floors'
 import { LOCATIONS } from '../data/locations'
 import type { Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
@@ -140,6 +140,7 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
           <ul className="search__options" role="listbox" id={listboxId} aria-label="Search results">
             {results.map((loc, i) => {
               const cat = CATEGORIES[loc.category]
+              const paint = roomPaint(loc)
               return (
                 <li
                   key={loc.id}
@@ -155,7 +156,7 @@ export function DestinationSearch({ onPick, inputRef: externalRef }: Props) {
                 >
                   <span
                     className="dest-item__icon"
-                    style={{ background: cat.fill, color: cat.text }}
+                    style={{ background: paint.fill, color: paint.icon }}
                     aria-hidden="true"
                   >
                     <UiMapIcon type={loc.icon} size={19} />

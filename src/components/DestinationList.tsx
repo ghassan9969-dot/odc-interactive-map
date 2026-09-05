@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { CATEGORIES, FLOOR_BY_ID } from '../data/floors'
+import { CATEGORIES, FLOOR_BY_ID, roomPaint } from '../data/floors'
 import { locationsOnFloor } from '../data/locations'
 import type { FloorId, Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
@@ -22,6 +22,7 @@ export function DestinationList({ floor, selectedId, onSelect }: Props) {
 
   const renderItem = (loc: Location) => {
     const cat = CATEGORIES[loc.category]
+    const paint = roomPaint(loc)
     return (
       <li key={loc.id}>
         <button
@@ -32,7 +33,7 @@ export function DestinationList({ floor, selectedId, onSelect }: Props) {
         >
           <span
             className="dest-item__icon"
-            style={{ background: cat.fill, color: cat.text }}
+            style={{ background: paint.fill, color: paint.icon }}
             aria-hidden="true"
           >
             <UiMapIcon type={loc.icon} size={19} />

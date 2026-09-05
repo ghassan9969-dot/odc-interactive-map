@@ -55,6 +55,7 @@ export function SidePanel({
 }: Props) {
   const searchRef = useRef<HTMLInputElement | null>(null)
   const routeRef = useRef<HTMLDivElement | null>(null)
+  const detailsRef = useRef<HTMLElement | null>(null)
   const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false)
 
   // The rail's search button reopens the panel; focus once the expanded
@@ -64,6 +65,22 @@ export function SidePanel({
     searchRef.current?.focus()
     setFocusSearchOnOpen(false)
   }, [collapsed, focusSearchOnOpen])
+
+  // A newly chosen destination starts at the top of its card, rather than
+  // wherever the last one was left. Where the panel sits under the map it
+  // is the document that scrolls, so the card is brought up to the top of
+  // the screen; on desktop the panel returns to its own top. Visitors who
+  // have asked for reduced motion get the jump without the animation.
+  const selectedId = selected?.id ?? null
+  useEffect(() => {
+    const el = detailsRef.current
+    if (!el || !selectedId) return
+    el.scrollTop = 0
+    const media = typeof window.matchMedia === 'function' ? window.matchMedia : null
+    if (!media || !window.matchMedia('(max-width: 900px)').matches) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
+  }, [selectedId])
 
   // Bring the current leg — and its Continue button — into view whenever
   // navigation starts or moves to the next floor. Visitors who have asked
@@ -131,7 +148,11 @@ export function SidePanel({
             <FloorSelector value={floor} onChange={onFloorChange} />
 
             {selected ? (
-              <section className="panel__details" aria-label={`${selected.name} details`}>
+              <section
+                className="panel__details"
+                ref={detailsRef}
+                aria-label={`${selected.name} details`}
+              >
                 <button type="button" className="panel__back" onClick={onClearSelection}>
                   <ChevronLeft size={17} aria-hidden="true" />
                   All destinations

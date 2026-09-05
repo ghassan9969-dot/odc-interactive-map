@@ -366,8 +366,146 @@ export function floorChangeHint(target: Location): string | null {
   return `Take the lift to the ${name}, then follow the highlighted route.`
 }
 
+/**
+ * Minutes on foot at a relaxed 1.3 m/s.
+ *
+ * Deliberately not clamped to a whole minute: the building is small,
+ * and every leg in it comes in well under sixty seconds. Rounding a
+ * three-metre walk up to "1 min" would overstate the walk.
+ */
 export function walkingMinutes(units: number): number {
-  return Math.max(1, Math.round(units / UNITS_PER_METRE / 1.3 / 60))
+  return units / UNITS_PER_METRE / 1.3 / 60
+}
+
+/**
+ * How the panel says the walking time, or nothing at all.
+ *
+ * A leg the visitor covers in under a minute gets no time at all: the
+ * panel would either round it up to a minute it does not take, or
+ * spend a chip saying it is short, and the distance beside it already
+ * says that better.
+ */
+export function walkingTimeLabel(units: number): string | null {
+  const minutes = walkingMinutes(units)
+  return minutes < 1 ? null : `${Math.round(minutes)} min`
+}
+
+/* ------------------------------------------------------------------ */
+/* How the panel presents a journey                                    */
+/*                                                                     */
+/* Presentation only: nothing below reads or changes the graph, the    */
+/* coordinates, the distances or the instruction text. It decides      */
+/* what the route panel is allowed to claim about a walk.              */
+/* ------------------------------------------------------------------ */
+
+export interface RouteHeading {
+  /** Names where the walk actually ends, never where it may not go. */
+  title: string
+  /** Only for a redirected journey: what the visitor originally chose. */
+  subtitle: string | null
+  /** The desk a redirected visitor has to check in at, if any. */
+  checkInAt: string | null
+}
+
+/**
+ * The heading for a journey.
+ *
+ * A restricted room is never the endpoint — the walk stops at its
+ * check-in desk — so the title names the desk and the subtitle keeps
+ * the room the visitor actually asked for.
+ */
+export function routeHeading(target: Location): RouteHeading {
+  const end = routeTarget(target)
+  if (end.id === target.id) {
+    return { title: `Route to ${end.name}`, subtitle: null, checkInAt: null }
+  }
+  return {
+    title: `Route to ${end.name}`,
+    subtitle: `For access to ${target.name}`,
+    checkInAt: end.name,
+  }
+}
+
+export type RouteFactKind = 'floor' | 'origin' | 'distance' | 'time' | 'outdoor' | 'arrive'
+
+export interface RouteFact {
+  kind: RouteFactKind
+  label: string
+}
+
+/**
+ * The summary chips under the heading.
+ *
+ * Each number has to earn its place. The car park lies outside the
+ * surveyed plan, so it gets neither distance nor time — an honest
+ * "Outdoor route" stands in place of invented precision. A leg that
+ * rounds to no metres at all is a step out of a lift, not a walk, and
+ * says so. A leg under a minute shows its distance and no time.
+ *
+ * None of this touches what is stored: the route keeps its own length
+ * in SVG units either way.
+ */
+export function routeFacts(journey: Journey, legIndex: number): RouteFact[] {
+  const leg = journey.legs[legIndex]
+  const facts: RouteFact[] = [
+    { kind: 'floor', label: FLOOR_BY_ID[leg.floor].name },
+    { kind: 'origin', label: `From ${leg.route.originLabel}` },
+  ]
+
+  if (journey.target.routeNote) {
+    facts.push({ kind: 'outdoor', label: 'Outdoor route' })
+    return facts
+  }
+
+  // Rounded, not the `metres` helper the instruction text uses: that one
+  // floors at one metre, and a leg of no measurable length has to be
+  // recognisable here rather than reported as a metre of walking.
+  const distance = Math.round(leg.route.length / UNITS_PER_METRE)
+  if (distance === 0) {
+    facts.push({ kind: 'arrive', label: 'Arrive here' })
+    return facts
+  }
+
+  facts.push({ kind: 'distance', label: `${distance} m` })
+  const time = walkingTimeLabel(leg.route.length)
+  if (time) facts.push({ kind: 'time', label: time })
+  return facts
+}
+
+export type StageState = 'done' | 'active' | 'upcoming'
+
+export interface JourneyStage {
+  key: 'origin' | 'lift' | 'destination'
+  label: string
+  state: StageState
+}
+
+/**
+ * The progress stepper for a journey that changes floor.
+ *
+ * Both walking stages are always listed, with the lift between them,
+ * so a visitor on the first leg can already see what follows. The
+ * floors are named short — the summary chips directly above already
+ * carry the full name, and the stepper has to fit a 340px panel
+ * without shortening anything. A single-leg journey has no progress
+ * to show and returns nothing.
+ */
+export function journeyStages(journey: Journey, legIndex: number): JourneyStage[] {
+  if (journey.legs.length < 2) return []
+  const upstairs = legIndex >= 1
+  return [
+    {
+      key: 'origin',
+      label: FLOOR_BY_ID[journey.legs[0].floor].shortName,
+      state: upstairs ? 'done' : 'active',
+    },
+    { key: 'lift', label: 'Lift', state: upstairs ? 'done' : 'upcoming' },
+    {
+      key: 'destination',
+      label: FLOOR_BY_ID[journey.legs[1].floor].shortName,
+      state: upstairs ? 'active' : 'upcoming',
+    },
+  ]
 }
 
 export function pathAsSvg(points: Pt[]): string {

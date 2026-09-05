@@ -58,6 +58,25 @@ export type IconType =
   | 'activity'
   | 'play'
 
+/**
+ * The two clinical teams wear different uniforms, and the college
+ * wants the plan to carry the same identity: navy through the
+ * postgraduate clinic, marine blue through the undergraduate one.
+ * The `-soft` tints are for the desks that front each zone.
+ *
+ * `prayer` and `toilet` are the quiet facilities: one warm, one cool,
+ * both lighter than any destination so they never compete with one.
+ */
+export type ZoneToneId =
+  | 'pg'
+  | 'pg-soft'
+  | 'uc'
+  | 'uc-soft'
+  | 'lift'
+  | 'stair'
+  | 'prayer'
+  | 'toilet'
+
 /** A room / zone drawn on a floor map. */
 export interface MapShape {
   /** One or more closed polygons (in SVG space) that make up the room. */
@@ -73,6 +92,11 @@ export interface Location {
   shortName: string
   floor: FloorId
   category: CategoryId
+  /**
+   * Paints this room in its clinical zone's colours instead of its
+   * category's. Nothing else about the room changes.
+   */
+  tone?: ZoneToneId
   description: string
   icon: IconType
   /** Geometry of the room, in SVG coordinates for its floor. */
@@ -83,6 +107,16 @@ export interface Location {
    * and 'Oman Dental College Parking' everywhere else.
    */
   mapLabel?: string
+  /**
+   * A photograph of the room, imported through Vite so the built site
+   * gets a hashed URL that works under the Pages sub-path. Optional:
+   * a destination without one shows no image area at all.
+   */
+  image?: string
+  /** What the photograph shows. Required whenever `image` is set. */
+  imageAlt?: string
+  /** `object-position` for the crop, e.g. 'center 55%'. */
+  imagePosition?: string
   /**
    * Replaces the measured distance and the turn list on the route
    * panel. The car park sits outside the surveyed plan, so quoting
@@ -123,6 +157,8 @@ export interface Location {
 /** Secondary rooms: drawn, labelled faintly, never listed or navigable. */
 export interface SecondarySpace {
   id: string
+  /** Paints this space in a wayfinding tone instead of its kind's grey. */
+  tone?: ZoneToneId
   name: string
   floor: FloorId
   shape: MapShape
