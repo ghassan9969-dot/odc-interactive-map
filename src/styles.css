@@ -571,7 +571,13 @@ button {
     box-shadow var(--dur) var(--ease);
 }
 
+/* Holds either a floor level or the stacked-floors mark, so all four
+   tabs keep the same two-line rhythm and the same height. */
 .floor-tab__level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 21px;
   font-size: var(--t-xl);
   font-weight: 700;
   line-height: 1.05;
@@ -667,6 +673,33 @@ button {
   letter-spacing: var(--track-caps);
   text-transform: uppercase;
   color: var(--ink-4);
+}
+
+/* Floor headings in the combined list. Quiet on purpose: they are
+   signposts between groups, not competitors with the room names. */
+.dest-list__floor {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-2) var(--sp-1);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.dest-list__floor-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rooms of one floor. The outer list already provides the padding
+   and the bullets are suppressed throughout. */
+.dest-list__group-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .dest-item {

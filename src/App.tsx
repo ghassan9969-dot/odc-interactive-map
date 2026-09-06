@@ -4,11 +4,16 @@ import { CampusIntroduction } from './components/CampusIntroduction'
 import { FloorMap } from './components/FloorMap'
 import { MapLegend } from './components/MapLegend'
 import { SidePanel } from './components/SidePanel'
+import { FLOOR_BY_ID } from './data/floors'
 import { buildJourney, floorChangeHint, type Journey } from './data/routes'
-import type { FloorId, Location } from './data/types'
+import type { FloorId, ListScope, Location } from './data/types'
 
 export default function App() {
+  // The map always draws one real floor. The list is scoped
+  // separately, so the combined view can survive the map moving to
+  // whichever floor a chosen destination happens to be on.
   const [floor, setFloor] = useState<FloorId>('ground')
+  const [scope, setScope] = useState<ListScope>('ground')
   const [selected, setSelected] = useState<Location | null>(null)
   const [journey, setJourney] = useState<Journey | null>(null)
   const [legIndex, setLegIndex] = useState(0)
@@ -20,10 +25,17 @@ export default function App() {
     setLegIndex(0)
   }, [])
 
-  /** Switching floor by hand clears the card and any active navigation. */
-  const changeFloor = useCallback(
-    (next: FloorId) => {
-      setFloor(next)
+  /**
+   * Choosing a tab by hand clears the card and any active navigation.
+   *
+   * A floor tab moves the map with it. The combined tab does not: it
+   * only changes what is listed, leaving the visitor looking at the
+   * same plan they were already reading.
+   */
+  const changeScope = useCallback(
+    (next: ListScope) => {
+      setScope(next)
+      if (next !== 'all') setFloor(next)
       setSelected(null)
       setFocusTarget(null)
       endNavigation()
@@ -34,7 +46,9 @@ export default function App() {
   const selectLocation = useCallback(
     (location: Location, options: { center?: boolean } = {}) => {
       // Browsing shows the destination on its own floor; the walk from
-      // the kiosk only starts when "How to get there" is pressed.
+      // the kiosk only starts when "How to get there" is pressed. The
+      // list scope is deliberately left alone: picking a First Floor
+      // room out of the combined list must not close the combined list.
       setFloor(location.floor)
       setSelected(location)
       endNavigation()
@@ -97,14 +111,14 @@ export default function App() {
 
       <main className="workspace">
         <SidePanel
-          floor={floor}
+          scope={scope}
           selected={selected}
           journey={journey}
           legIndex={legIndex}
           floorHint={selected && !journey ? floorChangeHint(selected) : null}
           collapsed={panelCollapsed}
           onToggleCollapsed={setPanelCollapsed}
-          onFloorChange={changeFloor}
+          onScopeChange={changeScope}
           onSelect={(loc) => selectLocation(loc)}
           onClearSelection={clearSelection}
           onRoute={showRoute}
@@ -112,12 +126,10 @@ export default function App() {
           onHideRoute={hideRoute}
         />
 
-        <section
-          className="stage"
-          id="floor-map-panel"
-          role="tabpanel"
-          aria-labelledby={`floor-tab-${floor}`}
-        >
+        {/* Labelled by the floor it is actually drawing. It cannot take
+            its name from the selected tab any more: the combined tab
+            names no floor at all. */}
+        <section className="stage" id="floor-map-panel" aria-label={`${FLOOR_BY_ID[floor].name} map`}>
           <FloorMap
             floor={floor}
             selectedId={selected?.id ?? null}

@@ -11,6 +11,17 @@ export type Pt = [number, number]
 
 export type FloorId = 'ground' | 'first' | 'second'
 
+/**
+ * What the destination list is showing.
+ *
+ * Deliberately wider than `FloorId`: the list can be scoped to one
+ * floor or to the important destinations of all three at once, while
+ * the map underneath always draws exactly one real floor. Keeping the
+ * two apart is what lets a visitor open a First Floor room from the
+ * combined list without the list snapping back to that floor.
+ */
+export type ListScope = FloorId | 'all'
+
 export type CategoryId =
   | 'clinical'
   | 'learning'
