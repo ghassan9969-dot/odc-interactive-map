@@ -76,3 +76,32 @@ export const importantByFloor = (): { groups: FloorGroup[]; total: number } => {
   }))
   return { groups, total: groups.reduce((n, g) => n + g.items.length, 0) }
 }
+
+/**
+ * How many destinations each photograph is used by.
+ *
+ * Counted from the floor data every time it is asked for, so a picture
+ * that is later given to a second room stops counting as that room's
+ * own, and one that becomes exclusive starts counting as it, with no
+ * list of ids or filenames to keep in step alongside.
+ */
+export const photoUsage = (): Map<string, number> => {
+  const uses = new Map<string, number>()
+  for (const l of LOCATIONS) {
+    if (!l.image) continue
+    uses.set(l.image, (uses.get(l.image) ?? 0) + 1)
+  }
+  return uses
+}
+
+/**
+ * Whether a destination's photograph belongs to it alone.
+ *
+ * The six tutorial rooms share one photograph between them, and the
+ * four lecture rooms another, so showing it beside every name would
+ * repeat the same picture down the list without telling a visitor which
+ * room is which. Only a picture used exactly once identifies the room
+ * it sits beside; the rest keep the category mark that does.
+ */
+export const hasUniquePhoto = (location: Location, uses = photoUsage()): boolean =>
+  location.image !== undefined && uses.get(location.image) === 1

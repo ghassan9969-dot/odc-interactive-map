@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { CATEGORIES, FLOOR_BY_ID, roomPaint } from '../data/floors'
-import { importantByFloor, locationsOnFloor } from '../data/locations'
+import { hasUniquePhoto, importantByFloor, locationsOnFloor, photoUsage } from '../data/locations'
 import type { ListScope, Location } from '../data/types'
 import { DEST_LIST_ID } from './FloorSelector'
 import { UiMapIcon } from './MapIcon'
@@ -24,6 +24,9 @@ export function DestinationList({ scope, selectedId, onSelect }: Props) {
 
   const combined = useMemo(() => (scope === 'all' ? importantByFloor() : null), [scope])
 
+  // Counted once for the whole list rather than once per row.
+  const photoUses = useMemo(() => photoUsage(), [])
+
   const renderItem = (loc: Location) => {
     const cat = CATEGORIES[loc.category]
     const paint = roomPaint(loc)
@@ -35,13 +38,33 @@ export function DestinationList({ scope, selectedId, onSelect }: Props) {
           aria-current={loc.id === selectedId}
           onClick={() => onSelect(loc)}
         >
-          <span
-            className="dest-item__icon"
-            style={{ background: paint.fill, color: paint.icon }}
-            aria-hidden="true"
-          >
-            <UiMapIcon type={loc.icon} size={19} />
-          </span>
+          {/* A room photographed for itself alone shows the photograph
+              in place of its category mark; every other room keeps the
+              mark it always had. Never both. A picture shared with
+              other rooms — one tutorial room standing for all six —
+              would repeat down the list without saying which room this
+              is, so those keep the mark too. The row's own name and the
+              button around it carry the meaning either way, which is
+              why the picture is decoration. */}
+          {hasUniquePhoto(loc, photoUses) ? (
+            <img
+              className="dest-item__thumb"
+              src={loc.image}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              style={{ objectPosition: loc.imagePosition ?? 'center' }}
+            />
+          ) : (
+            <span
+              className="dest-item__icon"
+              style={{ background: paint.fill, color: paint.icon }}
+              aria-hidden="true"
+            >
+              <UiMapIcon type={loc.icon} size={19} />
+            </span>
+          )}
           <span className="dest-item__text">
             <span className="dest-item__name">{loc.name}</span>
             <span className="dest-item__meta">{cat.label}</span>
