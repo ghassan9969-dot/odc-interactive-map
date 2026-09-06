@@ -155,6 +155,18 @@ export function RouteInstructions({ journey, legIndex, onGoToLeg, onHide }: Prop
         </p>
       )}
 
+      {/* The walk ends at the room next door because that is where the
+          only door is. Said here as well as on the card, because this
+          is the panel a visitor reads while walking. */}
+      {heading.access && (
+        <p className="route__check route__check--access">
+          <DoorOpen size={14} aria-hidden="true" />
+          <span>
+            <strong>{heading.access.title}.</strong> {heading.access.message}
+          </span>
+        </p>
+      )}
+
       <div className="route__actions">
         {next && (
           <button type="button" className="btn btn--primary" onClick={() => onGoToLeg(legIndex + 1)}>

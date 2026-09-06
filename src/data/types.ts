@@ -152,6 +152,21 @@ export interface Location {
     /** Id of the Location a visitor must be sent to instead. */
     routeVia: string
   }
+  /**
+   * A room whose door opens off another room rather than off a
+   * corridor. The walk ends at the room named by `routeVia`, and the
+   * card says plainly how the last few steps are made.
+   *
+   * This is not a restriction. Nothing here is forbidden or needs
+   * permission; the plan simply gives the room no public door of its
+   * own, and pretending otherwise would draw a route through a wall.
+   */
+  accessVia?: {
+    title: string
+    message: string
+    /** Id of the Location the walk ends at instead. */
+    routeVia: string
+  }
 }
 
 /** Secondary rooms: drawn, labelled faintly, never listed or navigable. */

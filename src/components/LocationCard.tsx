@@ -1,4 +1,4 @@
-import { Info, Lock, Navigation } from 'lucide-react'
+import { DoorOpen, Info, Lock, Navigation } from 'lucide-react'
 import { CATEGORIES, FLOOR_BY_ID, roomPaint } from '../data/floors'
 import type { Location } from '../data/types'
 import { UiMapIcon } from './MapIcon'
@@ -53,6 +53,18 @@ export function LocationCard({ location, routeShown, floorHint, onRoute }: Props
           <div>
             <strong>{location.restricted.title}</strong>
             <span>{location.restricted.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Not a restriction: the room is simply reached through another
+          one, so it is told calmly rather than in the warning red. */}
+      {location.accessVia && (
+        <div className="card__access">
+          <DoorOpen size={16} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: 2 }} />
+          <div>
+            <strong>{location.accessVia.title}</strong>
+            <span>{location.accessVia.message}</span>
           </div>
         </div>
       )}

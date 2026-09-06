@@ -1154,6 +1154,33 @@ button {
   line-height: 1.45;
 }
 
+/* Reached through another room. Informational, not a warning: the
+   brand tint, not the restriction red. */
+.card__access {
+  margin: 10px var(--sp-4) 0;
+  padding: 11px var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink);
+  font-size: var(--t-sm);
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.card__access strong {
+  display: block;
+  font-size: var(--t-md);
+  letter-spacing: var(--track-tight);
+  margin-bottom: 2px;
+}
+
+.card__access span {
+  display: block;
+  line-height: 1.45;
+}
+
 .card__actions {
   display: flex;
   gap: var(--sp-2);
@@ -1491,6 +1518,16 @@ button {
 .route__check svg {
   flex: 0 0 auto;
   margin-top: 2px;
+}
+
+/* The access note is a plain fact about the door, so it carries the
+   same calm box but normal weight rather than the check-in emphasis. */
+.route__check--access {
+  font-weight: 500;
+}
+
+.route__check--access strong {
+  font-weight: 700;
 }
 
 .route__actions {

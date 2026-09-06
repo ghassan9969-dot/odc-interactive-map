@@ -17,6 +17,14 @@ import cslPhoto from '../assets/locations/csl.webp'
 import lectureRoomsPhoto from '../assets/locations/lecture-rooms.webp'
 import libraryPhoto from '../assets/locations/library.webp'
 import multimediaPhoto from '../assets/locations/multimedia-room.webp'
+import oralBiologyLabPhoto from '../assets/locations/oral-biology-lab.webp'
+import plasterRoomPhoto from '../assets/locations/plaster-room.webp'
+import prosthodonticLabPhoto from '../assets/locations/prosthodontic-lab.webp'
+import researchHubPhoto from '../assets/locations/research-hub.webp'
+// One asset for all six tutorial rooms, the way the four lecture
+// rooms already share theirs: the browser fetches it once.
+import tutorialRoomsPhoto from '../assets/locations/tutorial-rooms.webp'
+import xrayCssdTrainingPhoto from '../assets/locations/xray-cssd-training.webp'
 
 const F = 'first' as const
 
@@ -137,6 +145,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 414, TOP, 554, 1095)] },
     label: f1(484, 1035),
     labelSize: 19,
@@ -154,6 +165,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 414, 1272, 554, BOT)] },
     label: f1(484, 1311),
     labelSize: 19,
@@ -171,6 +185,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 616, TOP, 762, 1125)] },
     label: f1(689, 1050),
     labelSize: 19,
@@ -188,6 +205,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 616, 1128, 762, 1240)] },
     label: f1(689, 1184),
     labelSize: 19,
@@ -205,6 +225,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 616, 1246, 762, BOT)] },
     label: f1(689, 1298),
     labelSize: 19,
@@ -222,6 +245,9 @@ export const firstLocations: Location[] = [
     category: 'laboratory',
     description: 'Teaching laboratory for oral biology and microscopy practicals.',
     icon: 'lab',
+    image: oralBiologyLabPhoto,
+    imageAlt: 'Microscope benches in the Oral Biology Laboratory',
+    imagePosition: 'center',
     shape: {
       polys: [rect(f1, 765, TOP, 913, BOT)],
       dividers: [
@@ -246,6 +272,9 @@ export const firstLocations: Location[] = [
     category: 'laboratory',
     description: 'Shared workspace supporting research students and projects.',
     icon: 'research',
+    image: researchHubPhoto,
+    imageAlt: 'Laboratory benches and equipment in the Research Hub',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 915, TOP, 1042, BOT)] },
     label: f1(978, 1185),
     labelSize: 18,
@@ -346,6 +375,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Training suite where students practise radiography and sterilisation.',
     icon: 'xray',
+    image: xrayCssdTrainingPhoto,
+    imageAlt: 'Dental X-ray units in the X-Ray and CSSD training room',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 1529, TOP, 1671, 1090)] },
     doorMarks: [f1(1643, TOP)],
     label: f1(1600, 1032),
@@ -363,6 +395,9 @@ export const firstLocations: Location[] = [
     category: 'learning',
     description: 'Teaching classroom for small group and tutorial sessions.',
     icon: 'classroom',
+    image: tutorialRoomsPhoto,
+    imageAlt: 'Tutorial room with tables, chairs and a display screen',
+    imagePosition: 'center',
     shape: { polys: [rect(f1, 1529, 1276, 1671, BOT)] },
     doorMarks: [f1(1548, BOT)],
     label: f1(1600, 1313),
@@ -382,8 +417,8 @@ export const firstLocations: Location[] = [
       'Clinical Simulation Laboratory - ninety-six simulation units where students practise before treating patients.',
     icon: 'simulation',
     image: cslPhoto,
-    imageAlt: 'Clinical Skills Laboratory at Oman Dental College',
-    imagePosition: 'center 55%',
+    imageAlt: 'Phantom-head training benches in the Clinical Skills Laboratory',
+    imagePosition: 'center',
     // Runs all the way down to the prosthodontic lab. Only the strip
     // above the plaster room stops short, at that room's north wall.
     shape: {
@@ -411,6 +446,42 @@ export const firstLocations: Location[] = [
     primary: true,
   },
   {
+    // Promoted from a support space. Every coordinate below is the one
+    // the plan already had: the same rectangle, the same label in the
+    // same place at the same size, and the same single door.
+    //
+    // That door opens into the CSL, not onto a corridor, so the room
+    // carries an `accessVia` and the walk ends at the CSL. Nothing here
+    // adds a node, an edge or a doorway to the graph.
+    id: 'f-s-plaster',
+    name: 'Plaster Room',
+    shortName: 'Plaster Room',
+    floor: F,
+    category: 'laboratory',
+    description:
+      'Laboratory used for preparing dental plaster models and casts. Access is through the Clinical Skills Laboratory.',
+    icon: 'lab',
+    image: plasterRoomPhoto,
+    imageAlt: 'Workbenches and equipment in the Plaster Room at Oman Dental College',
+    imagePosition: 'center',
+    shape: { polys: [rect(f1, 1889, 1244, 1953, 1386)] },
+    label: f1(1921, 1315),
+    labelSize: 12,
+    doorMarks: [f1(1921, 1244)],
+    // Its real doorway, into the CSL. The walk never reaches it: the
+    // redirect below ends the journey at the CSL's own public door.
+    door: f1(1921, 1244),
+    entryNode: 'v6_c',
+    keywords: ['plaster', 'dental models', 'casts', 'laboratory', 'prosthodontics'],
+    primary: false,
+    accessVia: {
+      title: 'Access via CSL',
+      message:
+        'The Plaster Room is accessed through the Clinical Skills Laboratory. Please ask a staff member for assistance.',
+      routeVia: 'f-simulation',
+    },
+  },
+  {
     id: 'f-prosthodontic',
     name: 'Prosthodontic Lab',
     shortName: 'Prosthodontic Lab',
@@ -418,6 +489,9 @@ export const firstLocations: Location[] = [
     category: 'laboratory',
     description: 'Laboratory of thirty-six benches for making crowns, bridges and dentures.',
     icon: 'lab',
+    image: prosthodonticLabPhoto,
+    imageAlt: 'Technician benches with lamps and monitors in the Prosthodontic Laboratory',
+    imagePosition: 'center',
     shape: {
       polys: [rect(f1, 1701, 1286, 1885, 1386)],
       dividers: dividersX(1701, 1286, 1885, 1386, 4),
@@ -586,16 +660,6 @@ export const firstSecondary: SecondarySpace[] = [
     floor: F,
     kind: 'core',
     shape: { polys: [rect(f1, 1529, 1224, 1599, 1272)] },
-  },
-  {
-    id: 'f-s-plaster',
-    name: 'Plaster Room',
-    floor: F,
-    kind: 'service',
-    shape: { polys: [rect(f1, 1889, 1244, 1953, 1386)] },
-    doorMarks: [f1(1921, 1244)],
-    label: f1(1921, 1315),
-    labelSize: 12,
   },
 ]
 

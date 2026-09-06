@@ -69,13 +69,35 @@ describe('the route heading names where the walk really ends', () => {
     }
   })
 
-  it('gives an unrestricted destination its own name and no subtitle', () => {
+  it('gives a destination reached off a corridor its own name and no subtitle', () => {
     expect(routeHeading(byId('g-canteen')).title).toBe('Route to Canteen / Restaurant')
-    for (const l of LOCATIONS.filter((x) => !x.restricted)) {
+    // A room redirects for one of two reasons: it is controlled, or its
+    // only door opens off another room. Everything else is walked to
+    // directly and simply says its own name.
+    for (const l of LOCATIONS.filter((x) => !x.restricted && !x.accessVia)) {
       const heading = routeHeading(l)
       expect(heading.title, l.id).toBe(`Route to ${l.name}`)
       expect(heading.subtitle, l.id).toBeNull()
       expect(heading.checkInAt, l.id).toBeNull()
+      expect(heading.access, l.id).toBeNull()
+    }
+  })
+
+  it('sends a room reached through another one to that other room', () => {
+    const viaOther = LOCATIONS.filter((l) => l.accessVia)
+    expect(viaOther.map((l) => l.id)).toEqual(['f-s-plaster'])
+    for (const l of viaOther) {
+      const heading = routeHeading(l)
+      const end = routeTarget(l)
+      expect(end.id, l.id).toBe(l.accessVia!.routeVia)
+      expect(heading.title, l.id).toBe(`Route to ${end.name}`)
+      expect(heading.subtitle, l.id).toBe(`For access to ${l.name}`)
+      // Told as an access note, never as a clinical restriction.
+      expect(heading.checkInAt, l.id).toBeNull()
+      expect(heading.access, l.id).toEqual({
+        title: l.accessVia!.title,
+        message: l.accessVia!.message,
+      })
     }
   })
 
