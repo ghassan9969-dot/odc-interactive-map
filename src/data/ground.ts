@@ -21,6 +21,7 @@ import { g, rect, poly, w, wRect } from './geometry'
 // Imported rather than referenced by path, so the built site gets
 // hashed URLs that work under the Pages sub-path.
 import canteenPhoto from '../assets/locations/canteen-restaurant.webp'
+import coffeeShopPhoto from '../assets/locations/coffee-shop.webp'
 import parkingPhoto from '../assets/locations/oman-dental-college-parking.webp'
 import pgClinicPhoto from '../assets/locations/postgraduate-clinic.webp'
 import studentsCommonPhoto from '../assets/locations/students-mixed-common-room.webp'
@@ -589,8 +590,8 @@ export const groundLocations: Location[] = [
       'The main clinical teaching and patient treatment area, with student chair banks either side of the central Stair 02 core.',
     icon: 'clinic',
     image: ucClinicPhoto,
-    imageAlt: 'Undergraduate Clinic at Oman Dental College',
-    imagePosition: 'center 55%',
+    imageAlt: 'Treatment bays in the Undergraduate Clinic',
+    imagePosition: 'center',
     shape: {
       polys: ucBankPolys,
       dividers: UC_BANKS.flatMap((b) =>
@@ -767,6 +768,9 @@ export const groundLocations: Location[] = [
     category: 'food',
     description: 'A convenient place for visitors and students to enjoy refreshments.',
     icon: 'coffee',
+    image: coffeeShopPhoto,
+    imageAlt: 'Café seating and service counter at Oman Dental College',
+    imagePosition: 'center',
     shape: { polys: [rect(g, 192, 838, 302, 942)] },
     label: g(247, 890),
     door: g(258, 944),

@@ -311,15 +311,28 @@ function makeRoute(target: Location, destLabel: string): Route | null {
 }
 
 /**
+ * The reason a walk ends somewhere other than the room asked for.
+ *
+ * Two rooms in the college redirect, for quite different reasons: a
+ * clinic is controlled and has to be entered past a desk, and the
+ * plaster room simply has no door onto a corridor. Both are the same
+ * shape of fact — walk to this other room instead — so both are read
+ * through here rather than each growing its own branch.
+ */
+const redirectOf = (target: Location) => target.restricted ?? target.accessVia ?? null
+
+/**
  * Where a walk may actually end.
  *
  * A restricted clinical area is never entered: the visitor is taken to
  * the check-in desk named by the restriction, and the card explains
- * what has to happen there before anyone goes any further.
+ * what has to happen there before anyone goes any further. A room
+ * reached through another one ends at that other room in the same way.
  */
 export function routeTarget(target: Location): Location {
-  if (!target.restricted) return target
-  return LOCATIONS.find((l) => l.id === target.restricted!.routeVia) ?? target
+  const via = redirectOf(target)
+  if (!via) return target
+  return LOCATIONS.find((l) => l.id === via.routeVia) ?? target
 }
 
 /** Single-floor walk to a destination, from that floor's own origin. */
@@ -403,8 +416,10 @@ export interface RouteHeading {
   title: string
   /** Only for a redirected journey: what the visitor originally chose. */
   subtitle: string | null
-  /** The desk a redirected visitor has to check in at, if any. */
+  /** The desk a visitor has to check in at, for a controlled area. */
   checkInAt: string | null
+  /** How the last few steps are made, for a room reached through another. */
+  access: { title: string; message: string } | null
 }
 
 /**
@@ -417,12 +432,17 @@ export interface RouteHeading {
 export function routeHeading(target: Location): RouteHeading {
   const end = routeTarget(target)
   if (end.id === target.id) {
-    return { title: `Route to ${end.name}`, subtitle: null, checkInAt: null }
+    return { title: `Route to ${end.name}`, subtitle: null, checkInAt: null, access: null }
   }
   return {
     title: `Route to ${end.name}`,
     subtitle: `For access to ${target.name}`,
-    checkInAt: end.name,
+    // A controlled area is checked into; a room off another room is
+    // simply walked through. The panel says whichever is true.
+    checkInAt: target.restricted ? end.name : null,
+    access: target.accessVia
+      ? { title: target.accessVia.title, message: target.accessVia.message }
+      : null,
   }
 }
 
