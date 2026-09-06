@@ -6,17 +6,18 @@ import { DestinationList } from './DestinationList'
 import { LocationCard } from './LocationCard'
 import { RouteInstructions } from './RouteInstructions'
 import type { Journey } from '../data/routes'
-import type { FloorId, Location } from '../data/types'
+import type { ListScope, Location } from '../data/types'
 
 interface Props {
-  floor: FloorId
+  /** What the destination list is showing: one floor, or all of them. */
+  scope: ListScope
   selected: Location | null
   journey: Journey | null
   legIndex: number
   floorHint: string | null
   collapsed: boolean
   onToggleCollapsed: (collapsed: boolean) => void
-  onFloorChange: (floor: FloorId) => void
+  onScopeChange: (scope: ListScope) => void
   onSelect: (location: Location) => void
   onClearSelection: () => void
   onRoute: () => void
@@ -39,14 +40,14 @@ interface Props {
  * — empty, so its floor tabs cannot duplicate the rail's ids.
  */
 export function SidePanel({
-  floor,
+  scope,
   selected,
   journey,
   legIndex,
   floorHint,
   collapsed,
   onToggleCollapsed,
-  onFloorChange,
+  onScopeChange,
   onSelect,
   onClearSelection,
   onRoute,
@@ -137,7 +138,7 @@ export function SidePanel({
 
             <div className="panel__rail-rule" role="presentation" />
 
-            <FloorSelector value={floor} onChange={onFloorChange} variant="rail" />
+            <FloorSelector value={scope} onChange={onScopeChange} variant="rail" />
           </>
         )}
       </div>
@@ -145,7 +146,7 @@ export function SidePanel({
       <div id="panel-body" className="panel__body" hidden={collapsed}>
         {!collapsed && (
           <>
-            <FloorSelector value={floor} onChange={onFloorChange} />
+            <FloorSelector value={scope} onChange={onScopeChange} />
 
             {selected ? (
               <section
@@ -175,7 +176,7 @@ export function SidePanel({
                 )}
               </section>
             ) : (
-              <DestinationList floor={floor} selectedId={null} onSelect={onSelect} />
+              <DestinationList scope={scope} selectedId={null} onSelect={onSelect} />
             )}
           </>
         )}

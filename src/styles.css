@@ -571,7 +571,13 @@ button {
     box-shadow var(--dur) var(--ease);
 }
 
+/* Holds either a floor level or the stacked-floors mark, so all four
+   tabs keep the same two-line rhythm and the same height. */
 .floor-tab__level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 21px;
   font-size: var(--t-xl);
   font-weight: 700;
   line-height: 1.05;
@@ -669,6 +675,33 @@ button {
   color: var(--ink-4);
 }
 
+/* Floor headings in the combined list. Quiet on purpose: they are
+   signposts between groups, not competitors with the room names. */
+.dest-list__floor {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-2) var(--sp-1);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.dest-list__floor-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rooms of one floor. The outer list already provides the padding
+   and the bullets are suppressed throughout. */
+.dest-list__group-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .dest-item {
   display: flex;
   align-items: center;
@@ -700,6 +733,20 @@ button {
   display: grid;
   place-items: center;
   box-shadow: inset 0 0 0 1px rgba(16, 48, 58, 0.05);
+}
+
+/* The photograph a destination already carries, shown where its
+   category mark would be. Exactly the mark's 36px slot — the border
+   sits inside it — so a list mixing pictures and marks keeps one
+   left edge for every name and one height for every row. */
+.dest-item__thumb {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  object-fit: cover;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  display: block;
 }
 
 .dest-item__text {
