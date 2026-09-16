@@ -7,12 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Allow the workflow to publish to Pages. Pull requests from forks get a
-# read-only token regardless, and they never reach the deploy job anyway.
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# Nothing is granted by default; each job asks for exactly what it needs.
+# This matters most for the build job, which runs `npm ci` and with it the
+# install scripts of every dependency: that job now holds a token that can
+# only read this repository, and cannot touch Pages or mint an OIDC token.
+permissions: {}
 
 # Let a running deployment finish; queue at most one more. Pull request
 # runs are keyed per branch so a new push supersedes the previous check.
@@ -26,8 +25,15 @@ jobs:
   build:
     name: Test, type-check and build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Do not leave the job's token behind in .git/config, where a
+          # later step — or a script a dependency runs during `npm ci` —
+          # could read it back out.
+          persist-credentials: false
 
       # node-version stays at 20: this is the Node the project is built
       # and tested with, independent of the action's own runtime.
@@ -50,25 +56,35 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Publishing steps are skipped on pull requests: nothing is uploaded
-      # and no Pages configuration is touched while reviewing a branch.
-      - uses: actions/configure-pages@v5
-        if: github.event_name != 'pull_request'
-
+      # Uploading the artifact needs no repository permissions beyond the
+      # read above. It is skipped for anything that will not publish, so a
+      # pull request and a manual run from another branch build and test
+      # but upload nothing.
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           path: dist
 
-  # Only pushes to main and manual runs publish. Never a pull request.
+  # The only job that publishes, and the only one holding the permissions
+  # to do it. `github.ref` is checked as well as the event, so a manual
+  # run started from a feature branch builds but never deploys.
   deploy:
     name: Deploy to Pages
     needs: build
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Moved here from the build job. Configuring Pages calls the Pages
+      # API and so needs `pages: write`; leaving it in the build job would
+      # have meant granting that permission to the job that runs
+      # third-party install scripts.
+      - uses: actions/configure-pages@v5
+
       - id: deployment
         uses: actions/deploy-pages@v4
